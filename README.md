@@ -8,11 +8,8 @@ A Discord bot for interacting with ComfyUI, allowing users to generate images th
    ```bash
    # Using uv (recommended)
    uv venv
-   source .venv/bin/activate  # On Unix systems
-   # OR
-   .venv\Scripts\activate  # On Windows
-   
-   uv pip install -e .
+   source .venv/bin/activate
+   uv sync
    ```
 
 2. Create a `.env` file from the template:

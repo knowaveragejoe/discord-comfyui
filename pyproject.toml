@@ -3,20 +3,22 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "comfyui-discord-bot"
+name = "discord-comfyui"
 version = "0.1.0"
 description = "A Discord bot for interacting with ComfyUI"
 requires-python = ">=3.10"
 dependencies = [
-    "discord.py>=2.3.2",
+    "discord.py>=2.4.0",
     "python-dotenv>=1.0.0",
     "websocket-client>=1.7.0",
     "requests>=2.31.0",
-    "pillow>=10.2.0"
+    "pillow>=10.2.0", 
+    "rich>=13.9.4",
+    "pyyaml"
 ]
 
 [project.scripts]
-comfyui-discord-bot = "comfyui_discord_bot.main:main"
+discord-comfyui = "discord_comfyui.main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/comfyui_discord_bot"]
+packages = ["src/discord_comfyui"]
