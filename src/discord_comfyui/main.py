@@ -14,14 +14,7 @@ logger = logging.getLogger(__name__)
 def main():
     """Main entry point for the bot"""
     try:
-        # Ensure config file exists
-        if not Path('config.yaml').exists():
-            logger.error(
-                "No config.yaml file found. Please create one from config.yaml.template"
-            )
-            sys.exit(1)
-            
-        # Load and start the bot
+        # Load and start the bot (config validation happens in load_bot)
         bot = load_bot()
         asyncio.run(bot.start(bot.config.token))
         

@@ -10,6 +10,7 @@ from typing import Optional
 
 import discord
 from discord.ext import commands
+from discord import app_commands
 import yaml
 
 # Configure logging with a consistent format
@@ -54,7 +55,7 @@ class BotConfig:
     """Main bot configuration including Discord and ComfyUI settings"""
     token: str
     guild_id: int
-    client_id: int  # Added client_id field
+    client_id: int
     comfyui: ComfyUIConfig
     allowed_channels: list[int] = field(default_factory=list)
     allowed_roles: list[int] = field(default_factory=list)
@@ -71,7 +72,7 @@ class BotConfig:
         return cls(
             token=data['bot_token'],
             guild_id=int(data['guild_id']),
-            client_id=int(data['client_id']),  # Parse client_id from config
+            client_id=int(data['client_id']),
             comfyui=ComfyUIConfig(
                 host=data['comfyui']['host'],
                 port=int(data['comfyui']['port'])
@@ -86,7 +87,7 @@ class BotConfig:
         return discord.utils.oauth_url(
             self.client_id,
             permissions=BOT_PERMISSIONS,
-            scopes=("bot",)
+            scopes=("bot", "applications.commands")  # Added applications.commands scope
         )
 
 class ComfyUIBot(commands.Bot):
@@ -114,8 +115,70 @@ class ComfyUIBot(commands.Bot):
         logger.info("\nBot Invite URL:")
         logger.info(self.config.invite_url + "\n")
         
-        # Register commands
-        await self.add_cog(ImageGenerationCommands(self))
+        # Set up slash commands
+        guild = discord.Object(id=self.config.guild_id)
+        
+        @self.tree.command(
+            name="genimg",
+            description="Generate an image using a specific workflow",
+            guild=guild
+        )
+        async def genimg(
+            interaction: discord.Interaction,
+            workflow_name: str,
+            prompt: str
+        ):
+            """Generate an image using the specified workflow and prompt"""
+            # Check channel restrictions
+            if self.config.allowed_channels and interaction.channel_id not in self.config.allowed_channels:
+                await interaction.response.send_message(
+                    "This command can only be used in specific channels.",
+                    ephemeral=True
+                )
+                return
+                
+            # Check role restrictions
+            if self.config.allowed_roles and not any(
+                role.id in self.config.allowed_roles for role in interaction.user.roles
+            ):
+                await interaction.response.send_message(
+                    "You don't have the required role to use this command.",
+                    ephemeral=True
+                )
+                return
+                
+            # Get the lock for this user
+            async with self.get_user_lock(interaction.user.id):
+                # Create initial response embed
+                embed = discord.Embed(
+                    title="Generating Image",
+                    description=f"Using workflow: {workflow_name}\nProcessing prompt: {prompt}",
+                    color=EMBED_COLOR_PROCESSING
+                )
+                await interaction.response.send_message(embed=embed)
+                
+                try:
+                    # TODO: Implement ComfyUI WebSocket connection and image generation
+                    logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
+                    logger.info(f"Workflow: {workflow_name}")
+                    logger.info(f"Prompt: {prompt}")
+                    
+                    # Placeholder for actual implementation
+                    await asyncio.sleep(2)  # Simulate processing time
+                    
+                    embed.color = EMBED_COLOR_COMPLETE
+                    embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
+                    await interaction.edit_original_response(embed=embed)
+                    
+                except Exception as e:
+                    logger.error("Image generation failed", exc_info=e)
+                    embed.color = EMBED_COLOR_ERROR
+                    embed.description = f"Failed to generate image: {str(e)}"
+                    await interaction.edit_original_response(embed=embed)
+        
+        # Sync the command tree
+        await self.tree.sync(guild=guild)
+        logger.info("Slash commands synced with Discord")
         
         logger.info("Bot setup complete")
         
@@ -138,4 +201,17 @@ class ComfyUIBot(commands.Bot):
             roles = [str(r) for r in self.config.allowed_roles]
             logger.info(f"Bot restricted to roles: {', '.join(roles)}")
 
-# ... rest of the file remains the same ...
+def load_bot() -> ComfyUIBot:
+    """Load the bot with configuration from config.yaml"""
+    # Get the project root directory (where config.yaml should be)
+    project_root = Path(__file__).parent.parent.parent
+    config_path = project_root / 'config.yaml'
+    
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Configuration file not found at: {config_path}\n"
+            "Please create one from config.yaml.template"
+        )
+    
+    config = BotConfig.from_yaml(config_path)
+    return ComfyUIBot(config)
