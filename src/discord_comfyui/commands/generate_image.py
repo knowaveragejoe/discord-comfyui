@@ -1,12 +1,9 @@
 """
 Generate image command implementation
 """
-import asyncio
 import logging
-import json
-import os
-from pathlib import Path
 import discord
+from ..generation_request import GenerationRequest
 from discord import app_commands
 from ..comfyui import ComfyUIClient
 from .base import BaseCommand
@@ -45,6 +42,7 @@ class GenerateImageCommand(BaseCommand):
                 await interaction.response.send_message(error_message, ephemeral=True)
                 return
             
+            # Lock image generation to one at a time
             if self._running:
                 await interaction.response.send_message("Another image generation is already in progress", ephemeral=True)
                 return
@@ -62,44 +60,45 @@ class GenerateImageCommand(BaseCommand):
                 await interaction.response.send_message(embed=embed)
                 
                 try:
-                    # Find and load the workflow file
-                    workflow_path = None
-                    workflows_dir = Path("workflows")
-                    for file in workflows_dir.glob("*.json"):
-                        if file.stem == workflow_name:
-                            workflow_path = file
-                            break
-                    
-                    if not workflow_path:
-                        raise ValueError(f"Workflow '{workflow_name}' not found")
-                    
-                    # Load and parse the workflow JSON
-                    with open(workflow_path) as f:
-                        workflow_data = json.load(f)
-                    
-                    # Extract node names
-                    node_descriptions = []
-                    for node_id, node_info in workflow_data.items():
-                        node_descriptions.append(f"Node {node_id}: {node_info['class_type']} - {node_info.get('_meta').get('title')}")
+                    # Create and process the generation request
+                    generation_request = GenerationRequest(
+                        prompt=prompt,
+                        workflow_name=workflow_name,
+                        negative_prompt=negative_prompt
+                    )
                     
                     # Update embed with workflow information
                     embed.add_field(
                         name="Workflow Nodes",
-                        value="\n".join(node_descriptions),
+                        value="\n".join(generation_request.get_node_descriptions()),
                         inline=False
                     )
-
-                    # sleep for 5 seconds to simulate image generation
-                    await asyncio.sleep(5)
                     
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
                     logger.info(f"Workflow: {workflow_name}")
                     logger.info(f"Prompt: {prompt}")
+                    logger.info(f"Negative prompt: {negative_prompt}")
                     
                     client = ComfyUIClient(self.bot.config.comfyui.host)
+                    await client.connect()
 
                     # Placeholder for actual implementation
-                    # await client.queue_prompt(prompt)
+                    response = await client.queue_prompt(generation_request.workflow_json)
+
+                    generation_request.prompt_id = response["prompt_id"]
+                    logger.info(f"Queued prompt with ID: {generation_request.prompt_id}")
+
+                    # Track the execution progress
+                    await self.track_progress(
+                        client=client, 
+                        generation_request=generation_request,
+                        interaction=interaction, 
+                        embed=embed
+                    )
+
+                    logger.info(f"Prompt response: {response}")
+
+                    print("!!!!!!!!!!!!!!!! Image generation complete !!!!!!!!!!!!!!!!!")
                     
                     embed.color = EMBED_COLOR_COMPLETE
                     embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
@@ -115,3 +114,33 @@ class GenerateImageCommand(BaseCommand):
                 
                 self._running = False
 
+    async def track_progress(self,
+        client: ComfyUIClient,
+        generation_request: GenerationRequest,
+        interaction: discord.Interaction,
+        embed: discord.Embed
+    ):
+        # Callback handler to update embed
+        async def progress_callback(data):
+            if data["type"] == "progress":
+                progress = data["data"]
+                value = progress["value"]
+                max_value = progress["max"]
+                percentage = int((value / max_value) * 20)  # 20 segments for progress bar
+                progress_bar = "█" * percentage + "░" * (20 - percentage)
+                progress_text = f"[{progress_bar}] {value}/{max_value}"
+                
+                embed.description = (
+                    f"Using workflow: {generation_request.workflow_name}\n"
+                    f"Processing prompt: {generation_request.prompt}\n"
+                    f"Progress: {progress_text}"
+                )
+                await interaction.edit_original_response(embed=embed)
+
+        # Track the execution progress
+        logger.info(f"Tracking progress for prompt {generation_request.prompt_id}....")
+        await client.track_progress(generation_request.prompt_id, callback=progress_callback)
+
+        logger.info("End of track_progress")
+
+        return

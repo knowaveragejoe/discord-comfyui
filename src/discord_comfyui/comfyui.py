@@ -184,7 +184,7 @@ class ComfyUIClient:
                     
                     # Call the callback if provided
                     if callback:
-                        callback(data)
+                        await callback(data)
                     
                     # Log progress information
                     if data["type"] == "progress":
