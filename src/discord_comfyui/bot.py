@@ -11,6 +11,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 from discord import app_commands
+from discord_comfyui.comfyui import ComfyUIClient
 import yaml
 
 # Configure logging with a consistent format
@@ -38,17 +39,19 @@ BOT_PERMISSIONS = discord.Permissions(
 class ComfyUIConfig:
     """Configuration settings for ComfyUI server connection"""
     host: str 
-    port: int
+    port: Optional[int] = None
     
     @property
     def websocket_url(self) -> str:
         """Get the WebSocket URL for ComfyUI server"""
-        return f"ws://{self.host}:{self.port}/ws"
+        base_url = f"ws://{self.host}"
+        return f"{base_url}:{self.port}/ws" if self.port is not None else f"{base_url}/ws"
     
     @property
     def api_url(self) -> str:
         """Get the base HTTP API URL for ComfyUI server"""
-        return f"http://{self.host}:{self.port}"
+        base_url = f"http://{self.host}"
+        return f"{base_url}:{self.port}" if self.port is not None else base_url
 
 @dataclass
 class BotConfig:
@@ -75,7 +78,7 @@ class BotConfig:
             client_id=int(data['client_id']),
             comfyui=ComfyUIConfig(
                 host=data['comfyui']['host'],
-                port=int(data['comfyui']['port'])
+                port=int(data['comfyui']['port']) if 'port' in data['comfyui'] else None
             ),
             allowed_channels=data.get('allowed_channels', []),
             allowed_roles=data.get('allowed_roles', [])
@@ -117,9 +120,92 @@ class ComfyUIBot(commands.Bot):
         
         # Set up slash commands
         guild = discord.Object(id=self.config.guild_id)
-        
+
+        # @self.tree.command(
+        #     name="history",
+        #     description="Show queue history",
+        #     guild=guild
+        # )
+        # async def history(interaction: discord.Interaction):
+        #     # Check permissions
+        #     passed, error_message = self.check_interaction_permissions(interaction)
+        #     if not passed:
+        #         await interaction.response.send_message(error_message, ephemeral=True)
+        #         return
+            
+        #     client = ComfyUIClient(self.config.comfyui.host)
+
+        #     history = await client.get_history()
+
+        #     model_list = "\n".join(history)
+
+        #     async with self.get_user_lock(interaction.user.id):
+        #         # Create initial response embed
+        #         embed = discord.Embed(
+        #             title=f"List of {model_type} available:",
+        #             description=model_list,
+        #             color=EMBED_COLOR_PROCESSING
+        #         )
+        #         await interaction.response.send_message(embed=embed)
+            
+        #     await client.close()
+
         @self.tree.command(
-            name="genimg",
+            name="list_models",
+            description="List available workflows in ComfyUI@aristotle",
+            guild=guild
+        )
+        async def list_models(interaction: discord.Interaction, model_type: str):
+            # Check permissions
+            passed, error_message = self.check_interaction_permissions(interaction)
+            if not passed:
+                await interaction.response.send_message(error_message, ephemeral=True)
+                return
+            
+            client = ComfyUIClient(self.config.comfyui.host)
+
+            models = await client.list_models(model_type)
+
+            model_list = "\n".join(models)
+
+            async with self.get_user_lock(interaction.user.id):
+                # Create initial response embed
+                embed = discord.Embed(
+                    title=f"List of {model_type} available:",
+                    description=model_list,
+                    color=EMBED_COLOR_PROCESSING
+                )
+                await interaction.response.send_message(embed=embed)
+            
+
+        @self.tree.command(
+            name="list_workflows",
+            description="List available workflows in ComfyUI@aristotle",
+            guild=guild
+        )
+        async def list_workflows(interaction: discord.Interaction):
+            """List available workflows from ComfyUI"""
+            # Check permissions
+            passed, error_message = self.check_interaction_permissions(interaction)
+            if not passed:
+                await interaction.response.send_message(error_message, ephemeral=True)
+                return
+                
+            # Get the lock for this user
+            async with self.get_user_lock(interaction.user.id):
+                # Placeholder for actual implementation
+                workflows = ["Workflow 1", "Workflow 2", "Workflow 3"]
+                workflow_list = "\n".join(workflows)
+                
+                embed = discord.Embed(
+                    title="Available Workflows",
+                    description=workflow_list,
+                    color=discord.Color.blue()
+                )
+                await interaction.response.send_message(embed=embed)
+
+        @self.tree.command(
+            name="gen_image",
             description="Generate an image using a specific workflow",
             guild=guild
         )
@@ -129,22 +215,10 @@ class ComfyUIBot(commands.Bot):
             prompt: str
         ):
             """Generate an image using the specified workflow and prompt"""
-            # Check channel restrictions
-            if self.config.allowed_channels and interaction.channel_id not in self.config.allowed_channels:
-                await interaction.response.send_message(
-                    "This command can only be used in specific channels.",
-                    ephemeral=True
-                )
-                return
-                
-            # Check role restrictions
-            if self.config.allowed_roles and not any(
-                role.id in self.config.allowed_roles for role in interaction.user.roles
-            ):
-                await interaction.response.send_message(
-                    "You don't have the required role to use this command.",
-                    ephemeral=True
-                )
+            # Check permissions
+            passed, error_message = self.check_interaction_permissions(interaction)
+            if not passed:
+                await interaction.response.send_message(error_message, ephemeral=True)
                 return
                 
             # Get the lock for this user
@@ -163,8 +237,10 @@ class ComfyUIBot(commands.Bot):
                     logger.info(f"Workflow: {workflow_name}")
                     logger.info(f"Prompt: {prompt}")
                     
+                    client = ComfyUIClient(self.config.comfyui.host)
+
                     # Placeholder for actual implementation
-                    await asyncio.sleep(2)  # Simulate processing time
+                    await client.queue_prompt(prompt)
                     
                     embed.color = EMBED_COLOR_COMPLETE
                     embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
@@ -187,11 +263,33 @@ class ComfyUIBot(commands.Bot):
         if user_id not in self._generation_locks:
             self._generation_locks[user_id] = asyncio.Lock()
         return self._generation_locks[user_id]
+    
+    def check_interaction_permissions(self, interaction: discord.Interaction) -> tuple[bool, Optional[str]]:
+        """Check if the interaction meets channel and role restrictions
+        
+        Args:
+            interaction: The Discord interaction to check
+            
+        Returns:
+            A tuple of (passed, error_message) where passed is True if all checks passed,
+            and error_message contains the failure reason if passed is False
+        """
+        # Check channel restrictions
+        if self.config.allowed_channels and interaction.channel_id not in self.config.allowed_channels:
+            return False, "This command can only be used in specific channels."
+                
+        # Check role restrictions
+        if self.config.allowed_roles and not any(
+            role.id in self.config.allowed_roles for role in interaction.user.roles
+        ):
+            return False, "You don't have the required role to use this command."
+        
+        return True, None
         
     async def on_ready(self):
         """Called when the bot has connected to Discord"""
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
-        logger.info(f"ComfyUI server configured at: {self.config.comfyui.websocket_url}")
+        logger.info(f"ComfyUI websocked configured at: {self.config.comfyui.websocket_url}")
         
         if self.config.allowed_channels:
             channels = [str(ch) for ch in self.config.allowed_channels]
