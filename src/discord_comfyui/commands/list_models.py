@@ -46,4 +46,4 @@ class ListModelsCommand(BaseCommand):
                     color=EMBED_COLOR_PROCESSING
                 )
                 await interaction.response.send_message(embed=embed)
-                client.close()
+                await client.close()

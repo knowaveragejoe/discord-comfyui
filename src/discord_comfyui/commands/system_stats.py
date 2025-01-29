@@ -57,9 +57,7 @@ class SystemStatsCommand(BaseCommand):
                         inline=False
                     )
                 
-                await interaction.response.send_message(embed=embed)
-                client.close()
-                
+                await interaction.response.send_message(embed=embed)                
             except Exception as e:
                 logger.error("Failed to get system stats", exc_info=e)
                 embed = discord.Embed(
@@ -68,4 +66,5 @@ class SystemStatsCommand(BaseCommand):
                     color=EMBED_COLOR_ERROR
                 )
                 await interaction.response.send_message(embed=embed, ephemeral=True)
-                client.close()
+                
+            await client.close()

@@ -68,3 +68,5 @@ class GenerateImageCommand(BaseCommand):
                     embed.color = EMBED_COLOR_ERROR
                     embed.description = f"Failed to generate image: {str(e)}"
                     await interaction.edit_original_response(embed=embed)
+                
+                await client.close()
