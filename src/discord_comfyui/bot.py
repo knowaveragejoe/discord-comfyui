@@ -164,7 +164,7 @@ class ComfyUIBot(commands.Bot):
     async def on_ready(self):
         """Called when the bot has connected to Discord"""
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
-        logger.info(f"ComfyUI websocked configured at: {self.config.comfyui.websocket_url}")
+        logger.info(f"ComfyUI websocket configured at: {self.config.comfyui.websocket_url}")
         
         if self.config.allowed_channels:
             channels = [str(ch) for ch in self.config.allowed_channels]

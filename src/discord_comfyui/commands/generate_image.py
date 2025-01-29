@@ -1,7 +1,7 @@
 """
 Generate image command implementation
 """
-
+import asyncio
 import logging
 import json
 import os
@@ -21,6 +21,9 @@ EMBED_COLOR_ERROR = discord.Color.red()
 
 class GenerateImageCommand(BaseCommand):
     """Command to generate images using ComfyUI workflows"""
+    def __init__(self, bot):
+        super().__init__(bot)
+        self._running = False
     
     def register(self, tree: app_commands.CommandTree, guild: discord.Object):
         """Register the command with the bot's command tree"""
@@ -41,6 +44,12 @@ class GenerateImageCommand(BaseCommand):
             if not passed:
                 await interaction.response.send_message(error_message, ephemeral=True)
                 return
+            
+            if self._running:
+                await interaction.response.send_message("Another image generation is already in progress", ephemeral=True)
+                return
+            else:
+                self._running = True
                 
             # Get the lock for this user
             async with self.bot.get_user_lock(interaction.user.id):
@@ -71,7 +80,7 @@ class GenerateImageCommand(BaseCommand):
                     # Extract node names
                     node_descriptions = []
                     for node_id, node_info in workflow_data.items():
-                        node_descriptions.append(f"Node {node_id}: {node_info['class_type']}")
+                        node_descriptions.append(f"Node {node_id}: {node_info['class_type']} - {node_info.get('_meta').get('title')}")
                     
                     # Update embed with workflow information
                     embed.add_field(
@@ -79,6 +88,9 @@ class GenerateImageCommand(BaseCommand):
                         value="\n".join(node_descriptions),
                         inline=False
                     )
+
+                    # sleep for 5 seconds to simulate image generation
+                    await asyncio.sleep(5)
                     
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
                     logger.info(f"Workflow: {workflow_name}")
@@ -92,11 +104,14 @@ class GenerateImageCommand(BaseCommand):
                     embed.color = EMBED_COLOR_COMPLETE
                     embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
                     await interaction.edit_original_response(embed=embed)
+                    await client.close()
                     
                 except Exception as e:
                     logger.error("Image generation failed", exc_info=e)
                     embed.color = EMBED_COLOR_ERROR
                     embed.description = f"Failed to generate image: {str(e)}"
                     await interaction.edit_original_response(embed=embed)
+                    await client.close()
                 
-                await client.close()
+                self._running = False
+
