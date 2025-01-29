@@ -3,6 +3,9 @@ Generate image command implementation
 """
 
 import logging
+import json
+import os
+from pathlib import Path
 import discord
 from discord import app_commands
 from ..comfyui import ComfyUIClient
@@ -30,7 +33,8 @@ class GenerateImageCommand(BaseCommand):
         async def genimg(
             interaction: discord.Interaction,
             workflow_name: str,
-            prompt: str
+            prompt: str,
+            negative_prompt: str = None
         ):
             # Check permissions
             passed, error_message = self.check_interaction_permissions(interaction)
@@ -49,7 +53,33 @@ class GenerateImageCommand(BaseCommand):
                 await interaction.response.send_message(embed=embed)
                 
                 try:
-                    # TODO: Implement ComfyUI WebSocket connection and image generation
+                    # Find and load the workflow file
+                    workflow_path = None
+                    workflows_dir = Path("workflows")
+                    for file in workflows_dir.glob("*.json"):
+                        if file.stem == workflow_name:
+                            workflow_path = file
+                            break
+                    
+                    if not workflow_path:
+                        raise ValueError(f"Workflow '{workflow_name}' not found")
+                    
+                    # Load and parse the workflow JSON
+                    with open(workflow_path) as f:
+                        workflow_data = json.load(f)
+                    
+                    # Extract node names
+                    node_descriptions = []
+                    for node_id, node_info in workflow_data.items():
+                        node_descriptions.append(f"Node {node_id}: {node_info['class_type']}")
+                    
+                    # Update embed with workflow information
+                    embed.add_field(
+                        name="Workflow Nodes",
+                        value="\n".join(node_descriptions),
+                        inline=False
+                    )
+                    
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
                     logger.info(f"Workflow: {workflow_name}")
                     logger.info(f"Prompt: {prompt}")
@@ -57,7 +87,7 @@ class GenerateImageCommand(BaseCommand):
                     client = ComfyUIClient(self.bot.config.comfyui.host)
 
                     # Placeholder for actual implementation
-                    await client.queue_prompt(prompt)
+                    # await client.queue_prompt(prompt)
                     
                     embed.color = EMBED_COLOR_COMPLETE
                     embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
