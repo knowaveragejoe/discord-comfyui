@@ -1,6 +1,21 @@
 # ComfyUI Discord Bot
 
-A Discord bot for interacting with ComfyUI, allowing users to generate images through Discord commands.
+A Discord bot for interacting with ComfyUI.
+
+Needs specially crafted workflows using the API-compatible workflow JSON schema.
+
+On the ComfyUI server, these can be placed in the `/workflows` directory.
+The bot will attempt to locate these based on name, and then provide the user's prompt argument into the workflow.
+
+## Commands
+- run prompts
+`/gen_img <workflow_name> <prompt>`
+- list models
+`/list_models <model_type>`
+- list workflows
+`/list_workflows`
+- get system stats
+`/get_system_stats`
 
 ## Setup
 
@@ -21,17 +36,12 @@ A Discord bot for interacting with ComfyUI, allowing users to generate images th
 
 4. Run the bot:
    ```bash
-   comfyui-discord-bot
+   discord-comfyui
    ```
 
 ## Configuration
 
-The following environment variables need to be set in your `.env` file:
-
-- `DISCORD_TOKEN`: Your Discord bot token
-- `DISCORD_GUILD_ID`: The ID of your Discord server
-- `COMFYUI_HOST`: The hostname of your ComfyUI server (default: 127.0.0.1)
-- `COMFYUI_PORT`: The port of your ComfyUI server (default: 8188)
+Copy the config.yaml.template to config.yaml and follow the comments to configure the bot.
 
 ## Development
 
