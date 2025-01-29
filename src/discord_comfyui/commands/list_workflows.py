@@ -5,7 +5,7 @@ List workflows command implementation
 import logging
 import discord
 from discord import app_commands
-from .base import BaseCommand
+from discord_comfyui.commands.base import BaseCommand
 
 # Configure logging
 logger = logging.getLogger(__name__)

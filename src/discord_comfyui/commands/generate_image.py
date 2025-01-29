@@ -3,10 +3,10 @@ Generate image command implementation
 """
 import logging
 import discord
-from ..generation_request import GenerationRequest
 from discord import app_commands
-from ..comfyui import ComfyUIClient
-from .base import BaseCommand
+from discord_comfyui.comfyui import ComfyUIClient
+from discord_comfyui.commands.base import BaseCommand
+from discord_comfyui.generation_request import GenerationRequest
 
 # Configure logging
 logger = logging.getLogger(__name__)

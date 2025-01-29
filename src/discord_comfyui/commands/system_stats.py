@@ -5,8 +5,8 @@ System stats command implementation
 import logging
 import discord
 from discord import app_commands
-from ..comfyui import ComfyUIClient
-from .base import BaseCommand
+from discord_comfyui.comfyui import ComfyUIClient
+from discord_comfyui.commands.base import BaseCommand
 
 # Configure logging
 logger = logging.getLogger(__name__)
