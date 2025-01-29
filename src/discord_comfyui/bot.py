@@ -11,8 +11,9 @@ from typing import Optional
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord_comfyui.comfyui import ComfyUIClient
 import yaml
+
+from .commands import COMMANDS
 
 # Configure logging with a consistent format
 logging.basicConfig(
@@ -120,157 +121,11 @@ class ComfyUIBot(commands.Bot):
         
         # Set up slash commands
         guild = discord.Object(id=self.config.guild_id)
-
-        @self.tree.command(
-            name="get_system_stats",
-            description="Get system statistics from ComfyUI server",
-            guild=guild
-        )
-        async def get_system_stats(interaction: discord.Interaction):
-            # Check permissions
-            passed, error_message = self.check_interaction_permissions(interaction)
-            if not passed:
-                await interaction.response.send_message(error_message, ephemeral=True)
-                return
-            
-            client = ComfyUIClient(self.config.comfyui.host)
-            
-            try:
-                stats = await client.get_system_stats()
-                
-                # Create an embed with the system stats
-                embed = discord.Embed(
-                    title="ComfyUI System Statistics",
-                    color=EMBED_COLOR_COMPLETE
-                )
-                
-                # Add fields for each stat category
-                for category, values in stats.items():
-                    if isinstance(values, dict):
-                        # If the value is a nested dict, format it nicely
-                        value_str = "\n".join(f"{k}: {v}" for k, v in values.items())
-                    else:
-                        value_str = str(values)
-                    embed.add_field(
-                        name=category.replace("_", " ").title(),
-                        value=f"```{value_str}```",
-                        inline=False
-                    )
-                
-                await interaction.response.send_message(embed=embed)
-                client.close()
-                
-            except Exception as e:
-                logger.error("Failed to get system stats", exc_info=e)
-                embed = discord.Embed(
-                    title="Error",
-                    description=f"Failed to get system stats: {str(e)}",
-                    color=EMBED_COLOR_ERROR
-                )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                client.close()
-
-        @self.tree.command(
-            name="list_models",
-            description="List available workflows in ComfyUI@aristotle",
-            guild=guild
-        )
-        async def list_models(interaction: discord.Interaction, model_type: str):
-            # Check permissions
-            passed, error_message = self.check_interaction_permissions(interaction)
-            if not passed:
-                await interaction.response.send_message(error_message, ephemeral=True)
-                return
-            
-            client = ComfyUIClient(self.config.comfyui.host)
-
-            models = await client.list_models(model_type)
-
-            model_list = "\n".join(models)
-
-            async with self.get_user_lock(interaction.user.id):
-                # Create initial response embed
-                embed = discord.Embed(
-                    title=f"List of {model_type} available:",
-                    description=model_list,
-                    color=EMBED_COLOR_PROCESSING
-                )
-                await interaction.response.send_message(embed=embed)
-                client.close()
-            
-        @self.tree.command(
-            name="list_workflows",
-            description="List available workflows in ComfyUI@aristotle",
-            guild=guild
-        )
-        async def list_workflows(interaction: discord.Interaction):
-            """List available workflows from ComfyUI"""
-            # Check permissions
-            passed, error_message = self.check_interaction_permissions(interaction)
-            if not passed:
-                await interaction.response.send_message(error_message, ephemeral=True)
-                return
-                
-            # Get the lock for this user
-            async with self.get_user_lock(interaction.user.id):
-                # Placeholder for actual implementation
-                workflows = ["Workflow 1", "Workflow 2", "Workflow 3"]
-                workflow_list = "\n".join(workflows)
-                
-                embed = discord.Embed(
-                    title="Available Workflows (placeholder)",
-                    description=workflow_list,
-                    color=discord.Color.blue()
-                )
-                await interaction.response.send_message(embed=embed)
-
-        @self.tree.command(
-            name="gen_image",
-            description="Generate an image using a specific workflow",
-            guild=guild
-        )
-        async def genimg(
-            interaction: discord.Interaction,
-            workflow_name: str,
-            prompt: str
-        ):
-            """Generate an image using the specified workflow and prompt"""
-            # Check permissions
-            passed, error_message = self.check_interaction_permissions(interaction)
-            if not passed:
-                await interaction.response.send_message(error_message, ephemeral=True)
-                return
-                
-            # Get the lock for this user
-            async with self.get_user_lock(interaction.user.id):
-                # Create initial response embed
-                embed = discord.Embed(
-                    title="Generating Image",
-                    description=f"Using workflow: {workflow_name}\nProcessing prompt: {prompt}",
-                    color=EMBED_COLOR_PROCESSING
-                )
-                await interaction.response.send_message(embed=embed)
-                
-                try:
-                    # TODO: Implement ComfyUI WebSocket connection and image generation
-                    logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
-                    logger.info(f"Workflow: {workflow_name}")
-                    logger.info(f"Prompt: {prompt}")
-                    
-                    client = ComfyUIClient(self.config.comfyui.host)
-
-                    # Placeholder for actual implementation
-                    await client.queue_prompt(prompt)
-                    
-                    embed.color = EMBED_COLOR_COMPLETE
-                    embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
-                    await interaction.edit_original_response(embed=embed)
-                    
-                except Exception as e:
-                    logger.error("Image generation failed", exc_info=e)
-                    embed.color = EMBED_COLOR_ERROR
-                    embed.description = f"Failed to generate image: {str(e)}"
-                    await interaction.edit_original_response(embed=embed)
+        
+        # Register all commands
+        for command_class in COMMANDS:
+            command = command_class(self)
+            command.register(self.tree, guild)
         
         # Sync the command tree
         await self.tree.sync(guild=guild)
