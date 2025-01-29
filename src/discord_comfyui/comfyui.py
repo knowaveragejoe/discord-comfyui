@@ -107,6 +107,17 @@ class ComfyUIClient:
         response.raise_for_status()
         return response.json()
 
+    async def get_system_stats(self) -> Dict[str, Any]:
+        """
+        Get system statistics from ComfyUI.
+        
+        Returns:
+            Dict containing system statistics like memory usage, device info, etc.
+        """
+        response = await self.http_client.get(f"{self.base_url}/system_stats")
+        response.raise_for_status()
+        return response.json()
+
     async def get_history(self) -> Dict[str, Any]:
         """
         Get the execution history for all prompts.
