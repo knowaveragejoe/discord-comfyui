@@ -158,6 +158,7 @@ class ComfyUIBot(commands.Bot):
                     )
                 
                 await interaction.response.send_message(embed=embed)
+                client.close()
                 
             except Exception as e:
                 logger.error("Failed to get system stats", exc_info=e)
@@ -167,6 +168,7 @@ class ComfyUIBot(commands.Bot):
                     color=EMBED_COLOR_ERROR
                 )
                 await interaction.response.send_message(embed=embed, ephemeral=True)
+                client.close()
 
         @self.tree.command(
             name="list_models",
@@ -194,6 +196,7 @@ class ComfyUIBot(commands.Bot):
                     color=EMBED_COLOR_PROCESSING
                 )
                 await interaction.response.send_message(embed=embed)
+                client.close()
             
         @self.tree.command(
             name="list_workflows",
@@ -215,7 +218,7 @@ class ComfyUIBot(commands.Bot):
                 workflow_list = "\n".join(workflows)
                 
                 embed = discord.Embed(
-                    title="Available Workflows",
+                    title="Available Workflows (placeholder)",
                     description=workflow_list,
                     color=discord.Color.blue()
                 )
