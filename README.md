@@ -6,6 +6,8 @@ Needs specially crafted workflows using the API-compatible workflow JSON schema,
 
 The bot will attempt to locate these based on name. The discord user's arguments are templated into the workflow JSON, then submitted to the ComfyUI API. Generation progress is tracked and displayed in a discord embed, with the final image being displayed as an attachment.
 
+You'll need a ComfyUI setup with whatever nodes, models, etc already configured.
+
 
 ## Setup
 
