@@ -35,7 +35,8 @@ class GenerateImageCommand(BaseCommand):
             interaction: discord.Interaction,
             prompt: str,
             workflow_name: str = "default",
-            negative_prompt: str = None
+            negative_prompt: str = None,
+            debug: bool = False
         ):
             # Check permissions
             passed, error_message = self.check_interaction_permissions(interaction)
@@ -119,7 +120,7 @@ class GenerateImageCommand(BaseCommand):
                     
                     
                     # Show additional technical details if debug mode is enabled
-                    if self.bot.config.debug:
+                    if debug:
                         embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
                         embed.add_field(name="Workflow", value=workflow_name)
                         embed.add_field(name="Model", value=generation_request.get_model_name())
