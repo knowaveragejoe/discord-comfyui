@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   discord-bot:
     build: .
     container_name: discord-comfyui-bot
     volumes:
-      # Mount config directory
-      - ./config:/app/config
+      # Mount config and workflows
+      - ./config.yaml:/app/config.yaml
+      - ./workflows:/app/workflows
     environment:
       # Add any environment variables if needed
       - TZ=America/New_York

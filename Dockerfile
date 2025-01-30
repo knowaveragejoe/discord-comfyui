@@ -1,4 +1,4 @@
-FROM python:3.12-slim as builder
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
@@ -9,29 +9,15 @@ RUN apt-get update && \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install uv
+RUN uv venv
+
 # Copy project files
 COPY pyproject.toml .
 COPY src/ src/
 
-# Install dependencies and build wheel
-RUN pip install --no-cache-dir build && \
-    python -m build --wheel
-
-# Start fresh with a clean image
-FROM python:3.12-slim
-
-WORKDIR /app
-
-# Copy built wheel from builder
-COPY --from=builder /app/dist/*.whl .
-COPY config.yaml.template config.yaml
-
-# Install the wheel
-RUN pip install --no-cache-dir *.whl && \
-    rm *.whl
-
-# Create volume for config
-VOLUME /app/config
+# Install project and dependencies
+RUN uv pip install -e . --system --no-cache-dir
 
 # Run the bot
 CMD ["discord-comfyui"]
