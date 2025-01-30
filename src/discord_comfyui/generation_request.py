@@ -2,7 +2,7 @@
 Generation request model for handling workflow processing
 """
 from typing import Optional, Dict, Any, List
-from .workflow import Workflow
+from .workflow_json import WorkflowJson
 
 class GenerationRequest:
     """Model for handling image generation requests"""
@@ -11,16 +11,32 @@ class GenerationRequest:
         prompt: str,
         workflow_name: str,
         negative_prompt: Optional[str] = None,
+        model_name: Optional[str] = None,
+        seed: Optional[str] = None,
         prompt_id: Optional[str] = None
     ):
+        """
+        GenerationRequest mediates between user inputs and rendering ComfyUI API-compatible workflow JSOn.
+
+        This is where default values for the ComfyUI API Prompt request are set.
+        
+        Args:
+            prompt: The positive prompt text
+            workflow_name: Name of the workflow template to use
+            negative_prompt: Optional negative prompt text
+            prompt_id: Optional ID for tracking the generation progress
+        """
         self.prompt = prompt
         self.negative_prompt = negative_prompt
+        self.seed = seed
+        self.model_name = model_name or "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"  # Default model
         self.prompt_id = prompt_id
-        self.workflow = Workflow(workflow_name)
-        
-        # Update prompts in the workflow
-        self.workflow.update_prompts(self.prompt, self.negative_prompt)
+        self.workflow = WorkflowJson(workflow_name)         
     
+    def set_prompt_id(self, prompt_id: str) -> None:
+        """Set the prompt ID ComfyUI gives us for tracking the generation progress"""
+        self.prompt_id = prompt_id
+
     def get_node_descriptions(self) -> List[str]:
         """Extract descriptions of nodes in the workflow"""
         return self.workflow.get_node_descriptions()
@@ -29,6 +45,13 @@ class GenerationRequest:
         """Extract the model name from the workflow"""
         return self.workflow.get_model_name()
     
-    def get_workflow_data(self) -> Dict[str, Any]:
-        """Get the workflow data"""
-        return self.workflow.get_workflow_data()
+    def get_workflow_api_json(self) -> Dict[str, Any]:
+        """Get the processed workflow JSON for the ComfyUI API"""
+        context = {
+            "positive_prompt": self.prompt,
+            "negative_prompt": self.negative_prompt,
+            "model_name": self.model_name,
+            "seed": self.seed
+        }
+
+        return self.workflow.get_workflow_api_json(context)

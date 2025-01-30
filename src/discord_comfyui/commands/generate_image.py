@@ -1,8 +1,6 @@
-"""
-Generate image command implementation
-"""
 import logging
 import io
+import random
 import discord
 from discord import app_commands
 from discord_comfyui.comfyui import ComfyUIClient
@@ -18,7 +16,9 @@ EMBED_COLOR_COMPLETE = discord.Color.dark_green()
 EMBED_COLOR_ERROR = discord.Color.red()
 
 class GenerateImageCommand(BaseCommand):
-    """Command to generate images using ComfyUI workflows"""
+    """
+        Command to generate images by triggering ComfyUI workflows via the ComfyUI API
+    """
     def __init__(self, bot):
         super().__init__(bot)
         self._running = False
@@ -36,12 +36,19 @@ class GenerateImageCommand(BaseCommand):
             prompt: str,
             workflow_name: str = "default",
             negative_prompt: str = None,
+            seed: str = None,
+            model_name: str = None,
             debug: bool = False
         ):
             # Check permissions
             passed, error_message = self.check_interaction_permissions(interaction)
             if not passed:
                 await interaction.response.send_message(error_message, ephemeral=True)
+                return
+            
+            # User must at least provide a prompt.
+            if not prompt:
+                await interaction.response.send_message("Prompt is required", ephemeral=True)
                 return
                            
             # Get the lock for this user
@@ -65,13 +72,19 @@ class GenerateImageCommand(BaseCommand):
                 await interaction.response.send_message(embed=embed)
                 
                 try:
+                    # If the seed is not provided, set it to a random value
+                    if not seed:
+                        seed = str(random.randint(0, 1000000))
+
                     # Create and process the generation request
                     generation_request = GenerationRequest(
-                        prompt=prompt,
                         workflow_name=workflow_name,
-                        negative_prompt=negative_prompt
+                        model_name=model_name,
+                        prompt=prompt,
+                        negative_prompt=negative_prompt,
+                        seed=seed
                     )
-
+                    
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
                     logger.info(f"Workflow: {workflow_name}")
                     logger.info(f"Prompt: {prompt}")
@@ -83,10 +96,10 @@ class GenerateImageCommand(BaseCommand):
                     await client.connect()
 
                     # trigger the prompt
-                    response = await client.queue_prompt(generation_request.get_workflow_data())
+                    response = await client.queue_prompt(generation_request.get_workflow_api_json())
 
-                    # save the prompt ID that ComfyUI returns
-                    generation_request.prompt_id = response["prompt_id"]
+                    # save the prompt ID that ComfyUI returns, necessary for tracking progress.
+                    generation_request.set_prompt_id(response["prompt_id"])
                     logger.info(f"Queued prompt with ID: {generation_request.prompt_id}")
 
                     # Track the execution progress & get the image filename
@@ -154,11 +167,9 @@ class GenerateImageCommand(BaseCommand):
                 percentage = int((value / max_value) * 20)  # 20 segments for progress bar
                 progress_bar = "█" * percentage + "░" * (20 - percentage)
                 progress_text = f"[{progress_bar}] {value}/{max_value}"
-
-                logging.info(f"GenerationRequest from callback: {generation_request}")
                 
                 embed.description = (
-                    f"Using workflow: {generation_request.workflow_name}\n"
+                    f"Using workflow: {generation_request.workflow.workflow_name}\n"
                     f"Processing prompt: {generation_request.prompt}\n"
                     f"Progress: {progress_text}"
                 )

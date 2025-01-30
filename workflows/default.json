@@ -1,7 +1,7 @@
 {
     "3": {
       "inputs": {
-        "seed": 600604466875586,
+        "seed": "{{ seed }}",
         "steps": 20,
         "cfg": 8,
         "sampler_name": "euler",
@@ -31,7 +31,7 @@
     },
     "4": {
       "inputs": {
-        "ckpt_name": "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"
+        "ckpt_name": "{{ model_name }}"
       },
       "class_type": "CheckpointLoaderSimple",
       "_meta": {
@@ -104,4 +104,4 @@
         "title": "Save Image"
       }
     }
-  }
+}
