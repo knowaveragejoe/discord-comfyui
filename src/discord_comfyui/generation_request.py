@@ -60,3 +60,14 @@ class GenerationRequest:
                 f"Node {node_id}: {node_info['class_type']} - {node_info.get('_meta', {}).get('title')}"
             )
         return descriptions
+
+    def get_model_name(self) -> str:
+        """Extract the model name from the workflow by finding the first CheckpointLoaderSimple node"""
+        if not self.workflow_json:
+            return ""
+        
+        for node_id, node_info in self.workflow_json.items():
+            if node_info.get("class_type") == "CheckpointLoaderSimple":
+                return node_info.get("inputs", {}).get("ckpt_name", "")
+        
+        return ""
