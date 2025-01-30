@@ -61,6 +61,7 @@ class BotConfig:
     guild_id: int
     client_id: int
     comfyui: ComfyUIConfig
+    debug: bool = False
     allowed_channels: list[int] = field(default_factory=list)
     allowed_roles: list[int] = field(default_factory=list)
     
@@ -81,6 +82,7 @@ class BotConfig:
                 host=data['comfyui']['host'],
                 port=int(data['comfyui']['port']) if 'port' in data['comfyui'] else None
             ),
+            debug=data.get('debug', False),
             allowed_channels=data.get('allowed_channels', []),
             allowed_roles=data.get('allowed_roles', [])
         )

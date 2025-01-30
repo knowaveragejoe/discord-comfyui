@@ -113,11 +113,18 @@ class GenerateImageCommand(BaseCommand):
                     embed.color = EMBED_COLOR_COMPLETE
                     embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}"
                     embed.set_image(url="attachment://generated_image.png")
-                    embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
-                    embed.add_field(name="Workflow", value=workflow_name)
+                    
+                    # Always show the prompt and workflow
                     embed.add_field(name="Prompt", value=prompt)
-                    embed.add_field(name="Negative Prompt", value=negative_prompt or "N/A")
-                    embed.add_field(name="Model: ", value=generation_request.get_model_name())
+                    
+                    
+                    # Show additional technical details if debug mode is enabled
+                    if self.bot.config.discord.debug:
+                        embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
+                        embed.add_field(name="Workflow", value=workflow_name)
+                        embed.add_field(name="Model", value=generation_request.get_model_name())
+                        if negative_prompt:
+                            embed.add_field(name="Negative Prompt", value=negative_prompt)
                     
                     await interaction.edit_original_response(embed=embed, attachments=[file])
                     await client.close()

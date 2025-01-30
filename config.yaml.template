@@ -7,6 +7,9 @@ guild_id: your_guild_id_here
 allowed_channels: []  # List of channel IDs where the bot can be used
 allowed_roles: []     # List of role IDs that can use the bot
 
+# Debug Configuration
+debug: false  # When true, shows additional technical details in Discord embeds
+
 # ComfyUI Server Configuration
 comfyui:
   host: 127.0.0.1
