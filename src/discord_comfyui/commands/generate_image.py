@@ -133,6 +133,7 @@ class GenerateImageCommand(BaseCommand):
                         embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
                         embed.add_field(name="Workflow", value=workflow_name)
                         embed.add_field(name="Model", value=generation_request.get_model_name())
+                        embed.add_field(name="Seed", value=seed)
                         if negative_prompt:
                             embed.add_field(name="Negative Prompt", value=negative_prompt)
                     

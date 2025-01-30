@@ -43,7 +43,7 @@ class GenerationRequest:
 
     def get_model_name(self) -> str:
         """Extract the model name from the workflow"""
-        return self.workflow.get_model_name()
+        return self.model_name
     
     def get_workflow_api_json(self) -> Dict[str, Any]:
         """Get the processed workflow JSON for the ComfyUI API"""
