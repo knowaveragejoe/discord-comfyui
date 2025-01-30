@@ -63,13 +63,19 @@ Copy the config.yaml.template to config.yaml and follow the comments to configur
 
 The bot relies on a rather brittle system of using ComfyUI workflows that can be completely arbitrary.
 
-Right now, the user specifies an optional workflow name, otherwise "default" is used. The bot searches for a matching workflow JSON file in the `/workflows` directory and parses it.
+Right now, the user specifies an optional workflow name, otherwise "default" is used. 
 
-The user needs to set up a mapping in config.yaml for workflow name, specifying things like:
-* The model to use, and what node loads it
-* The promp node(s), negative or positive, and where to put the discord user's text in those nodes
+The bot searches for a matching workflow JSON template in the `/workflows` directory and parses it.
 
-See config.yaml.example for an example workflow configuration.
+The workflow JSON template must be a valid ComfyUI workflow JSON schema. You can get this by going to ComfyUI > Workflow > Export (API).
+
+In the template, you can place the following placeholders, which will get templated with the discord user's input:
+- `{{ positive_prompt }}`: The positive prompt input
+- `{{ negative_prompt }}`: The negative prompt input
+- `{{ model_name }}`: The model name (Defaults to `Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors`)
+- `{{ seed }}`: The seed value (Defaults to a random integer if none provided by the user)
+
+See `/workflows/default.json` for an example.
 
 ## Usage
 

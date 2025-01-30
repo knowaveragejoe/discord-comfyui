@@ -51,7 +51,7 @@
     },
     "6": {
       "inputs": {
-        "text": "{{ user_prompt }}",
+        "text": "{{ positive_prompt }}",
         "clip": [
           "4",
           1
@@ -64,7 +64,7 @@
     },
     "7": {
       "inputs": {
-        "text": "{{ user_negative_prompt }}",
+        "text": "{{ negative_prompt }}",
         "clip": [
           "4",
           1
