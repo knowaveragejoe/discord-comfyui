@@ -11,3 +11,7 @@ allowed_roles: []     # List of role IDs that can use the bot
 comfyui:
   host: 127.0.0.1
   port: 8188
+
+# Giphy API Configuration
+giphy:
+  api_key: your_giphy_api_key_here
