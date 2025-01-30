@@ -1,12 +1,11 @@
-# ComfyUI Discord Bot
+# 🤖ComfyUI Discord Bot
 
-A Discord bot for interacting with ComfyUI.
+### A Discord bot for interacting with ComfyUI!
 
-Needs specially crafted workflows using the API-compatible workflow JSON schema, and a matching configuration in config.yaml in order to work.
+You'll need a ComfyUI setup with whatever nodes, models, etc already installed and configured.
 
-The bot will attempt to locate these based on name. The discord user's arguments are templated into the workflow JSON, then submitted to the ComfyUI API. Generation progress is tracked and displayed in a discord embed, with the final image being displayed as an attachment.
+The bot works by using ComfyUI workflows in API-compatible JSON format, templated with the user's input from discord.
 
-You'll need a ComfyUI setup with whatever nodes, models, etc already configured.
 
 
 ## Setup
