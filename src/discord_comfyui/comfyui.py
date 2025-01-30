@@ -143,7 +143,7 @@ class ComfyUIClient:
         response.raise_for_status()
         return response.json()
 
-    async def get_image(self, filename: str, subfolder: str, folder_type: str) -> bytes:
+    async def get_image(self, filename: str, subfolder: str = "", folder_type: str = "") -> bytes:
         """
         Retrieve an image from ComfyUI.
         
@@ -165,7 +165,22 @@ class ComfyUIClient:
         response.raise_for_status()
         return response.content
 
-    async def track_progress(self, prompt_id: str, callback: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
+    def extract_filename(self, data: Dict[str, Any]) -> str:
+        """Extract the output image filename from execution data with proper error handling.
+        
+        Args:
+            data: The execution data dictionary from ComfyUI
+            
+        Returns:
+            The extracted filename or empty string if not found/invalid
+        """
+        try:
+            return data["data"]["output"]["images"][0]["filename"]
+        except (KeyError, IndexError, TypeError):
+            logger.warning("Could not extract filename from execution data")
+            return ""
+
+    async def track_progress(self, prompt_id: str, callback: Optional[Callable[[Dict[str, Any]], None]] = None) -> str:
         """
         Track the progress of a prompt execution.
         
@@ -176,11 +191,14 @@ class ComfyUIClient:
         if not self.websocket:
             raise RuntimeError("Not connected to ComfyUI. Call connect() first.")
 
+
+        image_filename = ""
         try:
             while True:
                 message = await self.websocket.recv()
                 if isinstance(message, str):
                     data = json.loads(message)
+                    logger.info(f"Received message: {data}")
                     
                     # Call the callback if provided
                     if callback:
@@ -188,10 +206,17 @@ class ComfyUIClient:
                     
                     # Log progress information
                     if data["type"] == "progress":
-                        progress_data = data["data"]
-                        logger.info(f"Progress: {progress_data['value']}/{progress_data['max']}")
+                        pass
+                        # progress_data = data["data"]
+                        # logger.info(f"Progress: {progress_data['value']}/{progress_data['max']}")
                     
-                    # Check if execution is complete
+                    # technically we are "done" here, but we need to wait for the last "executing" message"
+                    # store the output filename for later retrieval.
+                    elif data["type"] == "executed":
+                        image_filename = self.extract_filename(data)
+                            
+                    
+                    # execution is "actually" finished here, so this is where we break
                     elif data["type"] == "executing":
                         if data["data"]["node"] is None and data["data"]["prompt_id"] == prompt_id:
                             logger.info("Execution completed")
@@ -199,6 +224,8 @@ class ComfyUIClient:
         except Exception as e:
             logger.error(f"Error while tracking progress: {e}")
             raise
+
+        return image_filename
 
     async def close(self) -> None:
         """Close the WebSocket and HTTP connections."""

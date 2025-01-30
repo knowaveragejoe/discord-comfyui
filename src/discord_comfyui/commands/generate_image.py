@@ -2,6 +2,7 @@
 Generate image command implementation
 """
 import logging
+import io
 import discord
 from discord import app_commands
 from discord_comfyui.comfyui import ComfyUIClient
@@ -67,42 +68,53 @@ class GenerateImageCommand(BaseCommand):
                         negative_prompt=negative_prompt
                     )
                     
-                    # Update embed with workflow information
-                    embed.add_field(
-                        name="Workflow Nodes",
-                        value="\n".join(generation_request.get_node_descriptions()),
-                        inline=False
-                    )
+                    # # Update embed with workflow information
+                    # embed.add_field(
+                    #     name="Workflow Nodes",
+                    #     value="\n".join(generation_request.get_node_descriptions()),
+                    #     inline=False
+                    # )
                     
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
                     logger.info(f"Workflow: {workflow_name}")
                     logger.info(f"Prompt: {prompt}")
                     logger.info(f"Negative prompt: {negative_prompt}")
                     
+                    # connect to the ComfyUI instance
                     client = ComfyUIClient(self.bot.config.comfyui.host)
                     await client.connect()
 
-                    # Placeholder for actual implementation
+                    # trigger the prompt
                     response = await client.queue_prompt(generation_request.workflow_json)
 
+                    # save the prompt ID that ComfyUI returns
                     generation_request.prompt_id = response["prompt_id"]
                     logger.info(f"Queued prompt with ID: {generation_request.prompt_id}")
 
-                    # Track the execution progress
-                    await self.track_progress(
+                    # Track the execution progress & get the image filename
+                    image_filename = await self.track_progress(
                         client=client, 
                         generation_request=generation_request,
                         interaction=interaction, 
                         embed=embed
                     )
 
-                    logger.info(f"Prompt response: {response}")
+                    logger.info(f"Image generation complete. Retrieving image: {image_filename}")
 
-                    print("!!!!!!!!!!!!!!!! Image generation complete !!!!!!!!!!!!!!!!!")
+                    # Retrieve the generated image
+                    image_data = await client.get_image(filename=image_filename, folder_type="output")
+                    logger.info(f"Image data retrieved: {len(image_data)} bytes")
+                    
+                    # Create a BytesIO object from the image data
+                    image_io = io.BytesIO(image_data)
+                    # Create a discord File object from the BytesIO
+                    file = discord.File(fp=image_io, filename="generated_image.png")
                     
                     embed.color = EMBED_COLOR_COMPLETE
-                    embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}\n(Image generation not yet implemented)"
-                    await interaction.edit_original_response(embed=embed)
+                    embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}"
+                    embed.set_image(url="attachment://generated_image.png")
+                    
+                    await interaction.edit_original_response(embed=embed, attachments=[file])
                     await client.close()
                     
                 except Exception as e:
@@ -139,8 +151,6 @@ class GenerateImageCommand(BaseCommand):
 
         # Track the execution progress
         logger.info(f"Tracking progress for prompt {generation_request.prompt_id}....")
-        await client.track_progress(generation_request.prompt_id, callback=progress_callback)
+        image_filename = await client.track_progress(generation_request.prompt_id, callback=progress_callback)
 
-        logger.info("End of track_progress")
-
-        return
+        return image_filename
