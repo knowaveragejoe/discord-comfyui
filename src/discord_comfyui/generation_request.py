@@ -1,9 +1,8 @@
 """
 Generation request model for handling workflow processing
 """
-import json
-from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+from .workflow import Workflow
 
 class GenerationRequest:
     """Model for handling image generation requests"""
@@ -17,57 +16,19 @@ class GenerationRequest:
         self.prompt = prompt
         self.negative_prompt = negative_prompt
         self.prompt_id = prompt_id
-        self.workflow_name = workflow_name
-        self.workflow_json: Optional[Dict[str, Any]] = None
+        self.workflow = Workflow(workflow_name)
         
-        # Process the workflow immediately upon initialization
-        self._process_workflow()
+        # Update prompts in the workflow
+        self.workflow.update_prompts(self.prompt, self.negative_prompt)
     
-    def _process_workflow(self) -> None:
-        """Find, load and process the workflow file"""
-        # Find the workflow file
-        workflow_path = None
-        workflows_dir = Path("workflows")
-        for file in workflows_dir.glob("*.json"):
-            if file.stem == self.workflow_name:
-                workflow_path = file
-                break
-        
-        if not workflow_path:
-            raise ValueError(f"Workflow '{self.workflow_name}' not found")
-        
-        # Load and parse the workflow JSON
-        with open(workflow_path) as f:
-            self.workflow_json = json.load(f)
-        
-        # Update prompt nodes
-        for node_id, node_info in self.workflow_json.items():
-            if "_meta" in node_info and "title" in node_info["_meta"]:
-                title = node_info["_meta"]["title"]
-                if "Positive" in title and "inputs" in node_info:
-                    node_info["inputs"]["text"] = self.prompt
-                elif "Negative" in title and "inputs" in node_info and self.negative_prompt:
-                    node_info["inputs"]["text"] = self.negative_prompt
-    
-    def get_node_descriptions(self) -> list[str]:
+    def get_node_descriptions(self) -> List[str]:
         """Extract descriptions of nodes in the workflow"""
-        if not self.workflow_json:
-            return []
-            
-        descriptions = []
-        for node_id, node_info in self.workflow_json.items():
-            descriptions.append(
-                f"Node {node_id}: {node_info['class_type']} - {node_info.get('_meta', {}).get('title')}"
-            )
-        return descriptions
+        return self.workflow.get_node_descriptions()
 
     def get_model_name(self) -> str:
-        """Extract the model name from the workflow by finding the first CheckpointLoaderSimple node"""
-        if not self.workflow_json:
-            return ""
-        
-        for node_id, node_info in self.workflow_json.items():
-            if node_info.get("class_type") == "CheckpointLoaderSimple":
-                return node_info.get("inputs", {}).get("ckpt_name", "")
-        
-        return ""
+        """Extract the model name from the workflow"""
+        return self.workflow.get_model_name()
+    
+    def get_workflow_data(self) -> Dict[str, Any]:
+        """Get the workflow data"""
+        return self.workflow.get_workflow_data()
