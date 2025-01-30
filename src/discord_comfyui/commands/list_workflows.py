@@ -3,6 +3,7 @@ List workflows command implementation
 """
 
 import logging
+from pathlib import Path
 import discord
 from discord import app_commands
 from discord_comfyui.commands.base import BaseCommand
@@ -30,12 +31,13 @@ class ListWorkflowsCommand(BaseCommand):
                 
             # Get the lock for this user
             async with self.bot.get_user_lock(interaction.user.id):
-                # Placeholder for actual implementation
-                workflows = ["Workflow 1", "Workflow 2", "Workflow 3"]
-                workflow_list = "\n".join(workflows)
+                # Get list of workflow files
+                workflows_dir = Path("workflows")
+                workflows = [f.name for f in workflows_dir.glob("*.json")]
+                workflow_list = "\n".join(workflows) if workflows else "No workflow files found"
                 
                 embed = discord.Embed(
-                    title="Available Workflows (placeholder)",
+                    title="Available Workflows",
                     description=workflow_list,
                     color=discord.Color.blue()
                 )

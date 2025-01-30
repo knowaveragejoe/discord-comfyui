@@ -4,7 +4,8 @@ A Discord bot for interacting with ComfyUI.
 
 Needs specially crafted workflows using the API-compatible workflow JSON schema, and a matching configuration in config.yaml in order to work.
 
-The bot will attempt to locate these based on name, and then provide the user's user's arguments into the workflow.
+The bot will attempt to locate these based on name. The discord user's arguments are templated into the workflow JSON, then submitted to the ComfyUI API. Generation progress is tracked and displayed in a discord embed, with the final image being displayed as an attachment.
+
 
 ## Setup
 
@@ -35,6 +36,8 @@ The bot will attempt to locate these based on name, and then provide the user's 
 
 ### Manual Setup
 
+You can also just run the bot manually.
+
 1. Create a virtual environment and install the bot:
    ```bash
    # Using uv (recommended)
@@ -57,7 +60,9 @@ The bot will attempt to locate these based on name, and then provide the user's 
 
 ## Bot Configuration
 
-Copy the config.yaml.template to config.yaml and follow the comments to configure the bot.
+You'll need a Discord developer account and a bot token. You can get this by creating a new application in the Discord Developer Portal.
+
+Copy the config.yaml.template to config.yaml and follow the comments to configure the bot with this info.
 
 ## Workflow Configuration
 
