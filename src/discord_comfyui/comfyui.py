@@ -198,7 +198,7 @@ class ComfyUIClient:
                 message = await self.websocket.recv()
                 if isinstance(message, str):
                     data = json.loads(message)
-                    logger.info(f"Received message: {data}")
+                    # logger.info(f"Received message: {data}")
                     
                     # Call the callback if provided
                     if callback:

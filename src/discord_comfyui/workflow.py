@@ -1,6 +1,3 @@
-"""
-Workflow model for handling ComfyUI workflow operations
-"""
 import json
 import yaml
 from pathlib import Path
@@ -8,7 +5,13 @@ from typing import Dict, Any, Optional, List
 from .workflow_template import WorkflowTemplate, WorkflowTemplateConfig
 
 class Workflow:
-    """Model for handling ComfyUI workflows"""
+    """
+    Model for handling ComfyUI workflows JSON.
+
+    Interacts with a WorkloadTemplate which defines what to template into the workflow JSON and where.
+    This WorkloadTemplate is defined in the config.yaml
+    
+    """
     def __init__(self, workflow_name: str):
         self.workflow_name = workflow_name
         self.workflow_json: Optional[Dict[str, Any]] = None
@@ -38,9 +41,9 @@ class Workflow:
             config = yaml.safe_load(f)
         
         # Get the default template configuration
-        template_config = config.get("workflows", {}).get("templates", {}).get("default")
+        template_config = config.get("workflows", {}).get("templates", {}).get(self.workflow_name)
         if not template_config:
-            raise ValueError("Default workflow template configuration not found in config.yaml")
+            raise ValueError(f"Config for workflow {self.workflow_name} not found in config.yaml")
         
         return WorkflowTemplateConfig.from_dict(template_config)
     

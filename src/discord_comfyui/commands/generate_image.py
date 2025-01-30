@@ -43,16 +43,19 @@ class GenerateImageCommand(BaseCommand):
             if not passed:
                 await interaction.response.send_message(error_message, ephemeral=True)
                 return
-            
-            # Lock image generation to one at a time
-            if self._running:
-                await interaction.response.send_message("Another image generation is already in progress", ephemeral=True)
-                return
-            else:
-                self._running = True
-                
+                           
             # Get the lock for this user
             async with self.bot.get_user_lock(interaction.user.id):
+                # set comfyUI client to None for now, so we can properly clean it up with the finally: block
+                client = None
+
+                # Lock image generation to one at a time
+                if self._running:
+                    await interaction.response.send_message("Another image generation is already in progress", ephemeral=True)
+                    return
+                else:
+                    self._running = True
+
                 # Create initial response embed
                 embed = discord.Embed(
                     title="Generating Image",
@@ -121,24 +124,28 @@ class GenerateImageCommand(BaseCommand):
                             embed.add_field(name="Negative Prompt", value=negative_prompt)
                     
                     await interaction.edit_original_response(embed=embed, attachments=[file])
-                    await client.close()
                     
                 except Exception as e:
                     logger.error("Image generation failed", exc_info=e)
                     embed.color = EMBED_COLOR_ERROR
                     embed.description = f"Failed to generate image: {str(e)}"
                     await interaction.edit_original_response(embed=embed)
-                    await client.close()
-                
-                self._running = False
+                finally:
+                    if client:
+                        await client.close()                
+                    self._running = False
 
-    async def track_progress(self,
+    async def track_progress(
+        self,
         client: ComfyUIClient,
         generation_request: GenerationRequest,
         interaction: discord.Interaction,
         embed: discord.Embed
     ):
-        # Callback handler to update embed
+        """
+        Callback handler to update embed with a progress bar. 
+        Returns the generated image filename from the websocket connection.
+        """
         async def progress_callback(data):
             if data["type"] == "progress":
                 progress = data["data"]
@@ -147,6 +154,8 @@ class GenerateImageCommand(BaseCommand):
                 percentage = int((value / max_value) * 20)  # 20 segments for progress bar
                 progress_bar = "█" * percentage + "░" * (20 - percentage)
                 progress_text = f"[{progress_bar}] {value}/{max_value}"
+
+                logging.info(f"GenerationRequest from callback: {generation_request}")
                 
                 embed.description = (
                     f"Using workflow: {generation_request.workflow_name}\n"
