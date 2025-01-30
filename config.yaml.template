@@ -15,3 +15,20 @@ comfyui:
 # Giphy API Configuration
 giphy:
   api_key: your_giphy_api_key_here
+
+# Workflow Template Configuration
+workflows:
+  templates:
+    default:  # Default template in /workflows/default.json
+      model:
+        node_type: "CheckpointLoaderSimple"  # Node type that loads the model
+        path: ["inputs", "ckpt_name"]        # Path to the model name in the node
+      prompts:
+        positive:
+          node_type: "CLIPTextEncode"        # Node type that handles text encoding
+          path: ["inputs", "text"]           # Path to the text input in the node
+          match_meta: "Positive"             # Metadata to match the prompt for positive & negative prompts
+        negative:
+          node_type: "CLIPTextEncode"
+          path: ["inputs", "text"]
+          match_meta: "Negative"

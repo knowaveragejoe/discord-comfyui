@@ -2,15 +2,19 @@
 Workflow model for handling ComfyUI workflow operations
 """
 import json
+import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+from .workflow_template import WorkflowTemplate, WorkflowTemplateConfig
 
 class Workflow:
     """Model for handling ComfyUI workflows"""
     def __init__(self, workflow_name: str):
         self.workflow_name = workflow_name
         self.workflow_json: Optional[Dict[str, Any]] = None
+        self.template: Optional[WorkflowTemplate] = None
         self._load_workflow()
+        self._init_template()
     
     def _load_workflow(self) -> None:
         """Find and load the workflow file"""
@@ -28,35 +32,36 @@ class Workflow:
         with open(workflow_path) as f:
             self.workflow_json = json.load(f)
     
-    def update_prompts(self, positive_prompt: str, negative_prompt: Optional[str] = None) -> None:
-        """
-            Update the positive and negative prompts in the workflow JSON
+    def _load_template_config(self) -> WorkflowTemplateConfig:
+        """Load the template configuration from config.yaml"""
+        with open("config.yaml") as f:
+            config = yaml.safe_load(f)
         
-            This is an ugly approach as it is blindly searching through the JSON for {{ user_prompt }} strings.
-
-            A better approach might be:
-            - use a templating engine like jinja or similar
-            - have the user define key path(s) in the JSON to replace
-        """
+        # Get the default template configuration
+        template_config = config.get("workflows", {}).get("templates", {}).get("default")
+        if not template_config:
+            raise ValueError("Default workflow template configuration not found in config.yaml")
+        
+        return WorkflowTemplateConfig.from_dict(template_config)
+    
+    def _init_template(self) -> None:
+        """Initialize the workflow template"""
         if not self.workflow_json:
             return
             
-        for node_id, node_info in self.workflow_json.items():
-            if "inputs" in node_info and "text" in node_info["inputs"]:
-                current_text = node_info["inputs"]["text"]
-                # Replace template variables if they exist
-                if "{{ user_prompt }}" in current_text:
-                    node_info["inputs"]["text"] = current_text.replace("{{ user_prompt }}", positive_prompt)
-                if negative_prompt and "{{ user_negative_prompt }}" in current_text:
-                    node_info["inputs"]["text"] = current_text.replace("{{ user_negative_prompt }}", negative_prompt)
-                
-            # Also handle nodes with specific titles for backward compatibility
-            if "_meta" in node_info and "title" in node_info["_meta"]:
-                title = node_info["_meta"]["title"]
-                if "Positive" in title and "inputs" in node_info:
-                    node_info["inputs"]["text"] = positive_prompt
-                elif "Negative" in title and "inputs" in node_info and negative_prompt:
-                    node_info["inputs"]["text"] = negative_prompt
+        template_config = self._load_template_config()
+        self.template = WorkflowTemplate(self.workflow_json, template_config)
+    
+    def update_prompts(self, positive_prompt: str, negative_prompt: Optional[str] = None) -> None:
+        """Update the positive and negative prompts in the workflow"""
+        if not self.template:
+            return
+            
+        prompts = {"positive": positive_prompt}
+        if negative_prompt:
+            prompts["negative"] = negative_prompt
+            
+        self.template.update_prompts(prompts)
     
     def get_node_descriptions(self) -> List[str]:
         """Extract descriptions of nodes in the workflow"""
@@ -71,22 +76,15 @@ class Workflow:
         return descriptions
 
     def get_model_name(self) -> str:
-        """
-        Extract the model name from the workflow by finding the first CheckpointLoaderSimple node
-        Only works if the workflow is using a CheckpointLoaderSimple as its main model.
-
-        """
-        if not self.workflow_json:
+        """Get the model name from the workflow"""
+        if not self.template:
             return ""
-        
-        for node_id, node_info in self.workflow_json.items():
-            if node_info.get("class_type") == "CheckpointLoaderSimple":
-                return node_info.get("inputs", {}).get("ckpt_name", "")
-        
-        return ""
+            
+        return self.template.get_model_name()
     
     def get_workflow_data(self) -> Dict[str, Any]:
         """Get the workflow data"""
-        if not self.workflow_json:
-            raise ValueError("Workflow not loaded")
-        return self.workflow_json
+        if not self.template:
+            raise ValueError("Workflow template not initialized")
+            
+        return self.template.get_workflow_data()
