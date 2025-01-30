@@ -16,8 +16,39 @@ The bot will attempt to locate these based on name, and then provide the user's 
 `/list_workflows`
 - get system stats
 `/get_system_stats`
+- get random Deanna Troi GIF
+`/gif`
 
 ## Setup
+
+### Using Docker (Recommended)
+
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone <repository-url>
+   cd discord-comfyui
+   ```
+
+2. Create a config directory and copy the template:
+   ```bash
+   mkdir config
+   cp config.yaml.template config/config.yaml
+   ```
+
+3. Edit config/config.yaml with your:
+   - Discord bot token
+   - Guild ID
+   - ComfyUI server details
+   - Giphy API key
+
+4. Build and start the bot:
+   ```bash
+   docker compose up -d
+   ```
+
+The bot will automatically restart unless stopped manually with `docker compose down`.
+
+### Manual Setup
 
 1. Create a virtual environment and install the bot:
    ```bash

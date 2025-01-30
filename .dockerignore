@@ -1,0 +1,26 @@
+# Version control
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Development/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+config.yaml
+*.log
+.pytest_cache/
+.coverage
+htmlcov/

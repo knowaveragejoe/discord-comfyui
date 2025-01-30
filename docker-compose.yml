@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    container_name: discord-comfyui-bot
+    volumes:
+      # Mount config directory
+      - ./config:/app/config
+    environment:
+      # Add any environment variables if needed
+      - TZ=America/New_York
+    restart: unless-stopped
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    name: bot-network
