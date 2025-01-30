@@ -3,6 +3,7 @@ import io
 import random
 import discord
 from discord import app_commands
+from rich import print
 from discord_comfyui.comfyui import ComfyUIClient
 from discord_comfyui.commands.base import BaseCommand
 from discord_comfyui.generation_request import GenerationRequest
@@ -35,7 +36,7 @@ class GenerateImageCommand(BaseCommand):
             interaction: discord.Interaction,
             prompt: str,
             workflow_name: str = "default",
-            negative_prompt: str = None,
+            negative_prompt: str = "",
             seed: str = None,
             model_name: str = None,
             debug: bool = False
@@ -96,7 +97,10 @@ class GenerateImageCommand(BaseCommand):
                     await client.connect()
 
                     # trigger the prompt
-                    response = await client.queue_prompt(generation_request.get_workflow_api_json())
+                    workflow_json = generation_request.get_workflow_api_json()
+                    # logger.info(f"Generated workflow JSON: {workflow_json}")
+
+                    response = await client.queue_prompt(workflow_json)
 
                     # save the prompt ID that ComfyUI returns, necessary for tracking progress.
                     generation_request.set_prompt_id(response["prompt_id"])
