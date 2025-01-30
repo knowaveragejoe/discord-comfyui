@@ -7,21 +7,9 @@ Needs specially crafted workflows using the API-compatible workflow JSON schema.
 On the ComfyUI server, these can be placed in the `/workflows` directory.
 The bot will attempt to locate these based on name, and then provide the user's prompt argument into the workflow.
 
-## Commands
-- run prompts
-`/gen_img <workflow_name> <prompt>`
-- list models
-`/list_models <model_type>`
-- list workflows
-`/list_workflows`
-- get system stats
-`/get_system_stats`
-- get random Deanna Troi GIF
-`/gif`
-
 ## Setup
 
-### Using Docker (Recommended)
+### Running the bog using Docker (Recommended)
 
 1. Clone the repository and navigate to the project directory:
    ```bash
@@ -39,7 +27,6 @@ The bot will attempt to locate these based on name, and then provide the user's 
    - Discord bot token
    - Guild ID
    - ComfyUI server details
-   - Giphy API key
 
 4. Build and start the bot:
    ```bash
@@ -70,9 +57,29 @@ The bot will automatically restart unless stopped manually with `docker compose 
    discord-comfyui
    ```
 
-## Configuration
+## Bot Configuration
 
 Copy the config.yaml.template to config.yaml and follow the comments to configure the bot.
+
+## Workflow Configuration
+
+The bot relies on a rather brittle system of using ComfyUI workflows that can be completely arbitrary.
+
+Right now, the user specifies an optional workflow name, otherwise "default" is used. The bot searches for a matching workflow JSON file in the `/workflows` directory and parses it.
+
+The "prompt" parameter the user provides is substituted into the workflow JSON file, replacing any instances of `{{user_prompt}} or `{{user_negative_prompt}}` respectively.
+
+
+## Usage
+
+- run prompts
+`/gen_img <workflow_name> <prompt>`
+- list models
+`/list_models <model_type>`
+- list workflows
+`/list_workflows`
+- get system stats
+`/get_system_stats`
 
 ## Development
 
