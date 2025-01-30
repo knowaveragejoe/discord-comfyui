@@ -61,7 +61,9 @@ Copy the config.yaml.template to config.yaml and follow the comments to configur
 
 ## Workflow Configuration
 
-The bot relies on a rather brittle system of using ComfyUI workflows that can be completely arbitrary.
+This is probably the most important part of the entire bot.
+
+The bot relies on a rather brittle system of using ComfyUI workflows, which can be completely arbitrary as defined by the user.
 
 Right now, the user specifies an optional workflow name, otherwise "default" is used. 
 
@@ -80,13 +82,17 @@ See `/workflows/default.json` for an example.
 ## Usage
 
 ### Run prompts:
-`/gen_img <poitive_prompt> <optional: negative_prompt> <optional: workflow_name> <optional: debug>`
+`/gen_img <poitive_prompt> <optional: negative_prompt> <optional: workflow_name> <optional: debug> <optional: seed> <optional: model_name>`
 
 `positive_prompt` is the only required parameter. It will run the `/workflows/default.json` workflow using this and place the `positive_prmopt` intput into the matching Positive prompt node
 
 `negative_prompt` is optional. If provided, it will place the `negative_prompt` input into the matching Negative prompt node.
 
 `workflow_name` is optional. If provided, it will attempt to load the `/workflows/<workflow_name>.json` file and use that instead of the default workflow.
+
+`model_name` is optional. If provided, it will place the `model_name` inpput wherever you want in the workflow JSON.
+
+`seed` is optional. If provided, it will place the `seed` wherever you need in the workflow JSON.
 
 `debug` is optional. If provided, it will print more information in the resulting embed in discord.
 
