@@ -119,7 +119,7 @@ class GenerateImageCommand(BaseCommand):
                     
                     
                     # Show additional technical details if debug mode is enabled
-                    if self.bot.config.discord.debug:
+                    if self.bot.config.debug:
                         embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
                         embed.add_field(name="Workflow", value=workflow_name)
                         embed.add_field(name="Model", value=generation_request.get_model_name())
