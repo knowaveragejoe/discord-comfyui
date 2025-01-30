@@ -34,7 +34,7 @@ class GenerateImageCommand(BaseCommand):
         async def genimg(
             interaction: discord.Interaction,
             prompt: str,
-            workflow_name: str = None,
+            workflow_name: str = "default",
             negative_prompt: str = None
         ):
             # Check permissions
