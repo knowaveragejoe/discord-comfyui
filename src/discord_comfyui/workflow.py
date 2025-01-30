@@ -29,11 +29,28 @@ class Workflow:
             self.workflow_json = json.load(f)
     
     def update_prompts(self, positive_prompt: str, negative_prompt: Optional[str] = None) -> None:
-        """Update the positive and negative prompts in the workflow"""
+        """
+            Update the positive and negative prompts in the workflow JSON
+        
+            This is an ugly approach as it is blindly searching through the JSON for {{ user_prompt }} strings.
+
+            A better approach might be:
+            - use a templating engine like jinja or similar
+            - have the user define key path(s) in the JSON to replace
+        """
         if not self.workflow_json:
             return
             
         for node_id, node_info in self.workflow_json.items():
+            if "inputs" in node_info and "text" in node_info["inputs"]:
+                current_text = node_info["inputs"]["text"]
+                # Replace template variables if they exist
+                if "{{ user_prompt }}" in current_text:
+                    node_info["inputs"]["text"] = current_text.replace("{{ user_prompt }}", positive_prompt)
+                if negative_prompt and "{{ user_negative_prompt }}" in current_text:
+                    node_info["inputs"]["text"] = current_text.replace("{{ user_negative_prompt }}", negative_prompt)
+                
+            # Also handle nodes with specific titles for backward compatibility
             if "_meta" in node_info and "title" in node_info["_meta"]:
                 title = node_info["_meta"]["title"]
                 if "Positive" in title and "inputs" in node_info:
@@ -54,7 +71,11 @@ class Workflow:
         return descriptions
 
     def get_model_name(self) -> str:
-        """Extract the model name from the workflow by finding the first CheckpointLoaderSimple node"""
+        """
+        Extract the model name from the workflow by finding the first CheckpointLoaderSimple node
+        Only works if the workflow is using a CheckpointLoaderSimple as its main model.
+
+        """
         if not self.workflow_json:
             return ""
         
