@@ -126,10 +126,11 @@ class GenerateImageCommand(BaseCommand):
                     file = discord.File(fp=image_io, filename="generated_image.png")
                     
                     embed.color = EMBED_COLOR_COMPLETE
+                    embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}"
                     embed.set_image(url="attachment://generated_image.png")
                     
                     # Always show the prompt
-                    embed.add_field(name="Prompt", value=prompt)                    
+                    # embed.add_field(name="Prompt", value=prompt)                    
                     
                     # Show additional technical details if debug mode is enabled
                     if debug:
