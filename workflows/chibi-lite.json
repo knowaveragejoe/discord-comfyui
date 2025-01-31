@@ -106,7 +106,7 @@
   },
   "43": {
     "inputs": {
-      "lora_name": "Chromecore_style-10.safetensors",
+      "lora_name": "Samaritan_3d_Cartoon_SDXL.safetensors",
       "strength_model": 1,
       "strength_clip": 1,
       "model": [
