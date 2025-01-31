@@ -4,8 +4,8 @@
         "seed": "{{ seed }}",
         "steps": 6,
         "cfg": 2,
-        "sampler_name": "dpmpp_sde_gpu",
-        "scheduler": "normal",
+        "sampler_name": "dpmpp_sde",
+        "scheduler": "karras",
         "denoise": 1,
         "model": [
           "4",
