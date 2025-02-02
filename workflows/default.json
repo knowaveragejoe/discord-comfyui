@@ -4,7 +4,7 @@
         "seed": "{{ seed }}",
         "steps": 6,
         "cfg": 2,
-        "sampler_name": "dpmpp_sde",
+        "sampler_name": "euler",
         "scheduler": "karras",
         "denoise": 1,
         "model": [

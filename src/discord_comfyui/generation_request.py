@@ -29,7 +29,7 @@ class GenerationRequest:
         self.prompt = prompt
         self.negative_prompt = negative_prompt
         self.seed = seed
-        self.model_name = model_name or "dreamshaper_xl.safetensors"
+        self.model_name = model_name or "flux1-dev-fp8.safetensors"
         #"Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"  # Default model
         self.prompt_id = prompt_id
         self.workflow = WorkflowJson(workflow_name)         
