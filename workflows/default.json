@@ -5,7 +5,7 @@
         "steps": 10,
         "cfg": 3,
         "sampler_name": "euler",
-        "scheduler": "karras",
+        "scheduler": "normal",
         "denoise": 1,
         "model": [
           "4",
