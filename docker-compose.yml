@@ -6,6 +6,7 @@ services:
       # Mount config and workflows
       - ./config.yaml:/app/config.yaml
       - ./workflows:/app/workflows
+      - ./saved:/app/saved
     environment:
       # Add any environment variables if needed
       - TZ=America/New_York
