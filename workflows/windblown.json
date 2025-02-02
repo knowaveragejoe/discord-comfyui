@@ -31,7 +31,7 @@
   },
   "4": {
     "inputs": {
-      "ckpt_name": "dreamshaper_xl.safetensors"
+      "ckpt_name": "flux1-dev-fp8.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
