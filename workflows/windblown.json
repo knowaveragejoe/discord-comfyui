@@ -2,10 +2,10 @@
   "3": {
     "inputs": {
       "seed": "{{ seed }}",
-      "steps": 8,
-      "cfg": 2,
-      "sampler_name": "dpmpp_sde",
-      "scheduler": "karras",
+      "steps": 20,
+      "cfg": 3,
+      "sampler_name": "euler",
+      "scheduler": "normal",
       "denoise": 1,
       "model": [
         "43",
@@ -40,8 +40,8 @@
   },
   "5": {
     "inputs": {
-      "width": 768,
-      "height": 1024,
+      "width": 512,
+      "height": 512,
       "batch_size": 1
     },
     "class_type": "EmptyLatentImage",
