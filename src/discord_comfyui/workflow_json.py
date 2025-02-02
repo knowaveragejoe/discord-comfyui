@@ -4,6 +4,8 @@ Model for handling ComfyUI workflows JSON.
 from pathlib import Path
 import logging
 from typing import Dict, Any, Optional, List
+import json
+from datetime import datetime
 from .workflow_template import WorkflowTemplate
 
 
@@ -61,4 +63,13 @@ class WorkflowJson:
         """
         Render the actual workflow JSON with the provided context using Jinja
         """
-        return self.template.render_template(context)
+        rendered_json = self.template.render_template(context)
+        
+        # Save the rendered JSON to a file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_path = Path("saved") / f"{self.workflow_name}_{timestamp}.json"
+        
+        with open(save_path, 'w') as f:
+            json.dump(rendered_json, f, indent=2)
+            
+        return rendered_json
