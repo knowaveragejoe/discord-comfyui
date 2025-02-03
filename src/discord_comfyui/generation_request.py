@@ -13,7 +13,9 @@ class GenerationRequest:
         negative_prompt: Optional[str] = None,
         model_name: Optional[str] = None,
         seed: Optional[str] = None,
-        prompt_id: Optional[str] = None
+        prompt_id: Optional[str] = None,
+        steps: Optional[int] = None,
+        cfg: Optional[float] = None
     ):
         """
         GenerationRequest mediates between user inputs and rendering ComfyUI API-compatible workflow JSOn.
@@ -32,6 +34,8 @@ class GenerationRequest:
         self.model_name = model_name or "flux1-dev-fp8.safetensors"
         #"Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"  # Default model
         self.prompt_id = prompt_id
+        self.steps = steps or 20  # Default to 20 steps
+        self.cfg = cfg or 7  # Default to 7.0 CFG
         self.workflow = WorkflowJson(workflow_name)         
     
     def set_prompt_id(self, prompt_id: str) -> None:
@@ -52,7 +56,9 @@ class GenerationRequest:
             "positive_prompt": self.prompt,
             "negative_prompt": self.negative_prompt,
             "model_name": self.model_name,
-            "seed": self.seed
+            "seed": self.seed,
+            "steps": self.steps,
+            "cfg": self.cfg
         }
 
         return self.workflow.get_workflow_api_json(context)

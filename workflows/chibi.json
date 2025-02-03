@@ -1,9 +1,9 @@
 {
   "3": {
     "inputs": {
-      "seed": "{{ seed }}",
-      "steps": 6,
-      "cfg": 2,
+      "seed": {{ seed|toint }},
+      "steps": {{ steps|toint }},
+      "cfg": {{ cfg|tofloat }},
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
       "denoise": 1,
@@ -119,9 +119,9 @@
   },
   "39": {
     "inputs": {
-      "seed": 203236410398179,
-      "steps": 5,
-      "cfg": 2,
+      "seed": {{ seed|toint }},
+      "steps": {{ steps|toint }},
+      "cfg": {{ cfg|tofloat }},
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
       "denoise": 0.5,

@@ -63,7 +63,7 @@ class WorkflowJson:
         """
         Render the actual workflow JSON with the provided context using Jinja
         """
-        rendered_json = self.template.render_template(context)
+        rendered_json = self.template.render(context)
         
         # Save the rendered JSON to a file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

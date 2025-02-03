@@ -1,10 +1,22 @@
 """
 Module for handling ComfyUI workflow templates and configuration
 """
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from pathlib import Path
 import json
-from jinja2 import Template
+from jinja2 import Template, Environment, BaseLoader
+
+def to_int(value: Union[str, int, None]) -> int:
+    """Convert value to integer, with None handling"""
+    if value is None:
+        return 0
+    return int(value)
+
+def to_float(value: Union[str, float, None]) -> float:
+    """Convert value to float, with None handling"""
+    if value is None:
+        return 0.0
+    return float(value)
 
 class WorkflowTemplate:
     """Handles workflow template processing using Jinja2"""
@@ -12,17 +24,14 @@ class WorkflowTemplate:
     def __init__(self, template_path: str):
         """Initialize with path to workflow template file"""
         self.template_path = template_path
+        # Create Jinja environment with custom filters
+        self.env = Environment(loader=BaseLoader())
+        self.env.filters['toint'] = to_int
+        self.env.filters['tofloat'] = to_float
+        
+        # Load template content
         with open(template_path, 'r') as f:
             self.template_str = f.read()
-    
-    def _escape_user_input(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Escape all string values in the context to ensure they're safe for JSON templating
-        """
-        escaped_context = {}
-        for key, value in context.items():
-            escaped_context[key] = json.dumps(value)[1:-1]
-        return escaped_context
             
     def render(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -34,19 +43,15 @@ class WorkflowTemplate:
                 - negative_prompt: The negative prompt text (optional)
                 - model_name: Name of the model checkpoint to use
                 - seed: Random seed for generation
+                - steps: Number of sampling steps (integer)
+                - cfg: Classifier free guidance scale (float)
                 
         Returns:
             Dict containing the rendered workflow data
         """
-        # Escape user inputs before templating
-        escaped_context = self._escape_user_input(context)
+        # Create template from environment to use custom filters
+        template = self.env.from_string(self.template_str)
         
-        template = Template(self.template_str)
-        rendered = template.render(**escaped_context)
+        # Render template first, then parse as JSON
+        rendered = template.render(**context)
         return json.loads(rendered)
-    
-    def render_template(self, context: Dict) -> Dict[str, Any]:
-        """
-        Get the processed workflow data with the given parameters
-        """
-        return self.render(context)

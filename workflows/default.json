@@ -1,9 +1,9 @@
 {
     "3": {
       "inputs": {
-        "seed": "{{ seed }}",
-        "steps": 10,
-        "cfg": 3,
+        "seed": {{ seed|toint }},
+        "steps": {{ steps|toint }},
+        "cfg": {{ cfg|tofloat }},
         "sampler_name": "euler",
         "scheduler": "normal",
         "denoise": 1,

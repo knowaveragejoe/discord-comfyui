@@ -1,9 +1,9 @@
 {
   "3": {
     "inputs": {
-      "seed": "{{ seed }}",
-      "steps": 8,
-      "cfg": 2,
+      "seed": {{ seed|toint }},
+      "steps": {{ steps|toint }},
+      "cfg": {{ cfg|tofloat }},
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
       "denoise": 1,

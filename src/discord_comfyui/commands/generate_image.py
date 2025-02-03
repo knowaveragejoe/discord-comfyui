@@ -39,6 +39,8 @@ class GenerateImageCommand(BaseCommand):
             negative_prompt: str = "",
             seed: str = None,
             model_name: str = None,
+            steps: int = None,
+            cfg: float = None,
             debug: bool = False
         ):
             # Check permissions
@@ -83,7 +85,9 @@ class GenerateImageCommand(BaseCommand):
                         model_name=model_name,
                         prompt=prompt,
                         negative_prompt=negative_prompt,
-                        seed=seed
+                        seed=seed,
+                        steps=steps,
+                        cfg=cfg
                     )
                     
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
@@ -140,6 +144,8 @@ class GenerateImageCommand(BaseCommand):
                         embed.add_field(name="Seed", value=seed)
                         if negative_prompt:
                             embed.add_field(name="Negative Prompt", value=negative_prompt)
+                        embed.add_field(name="Steps", value=str(steps or 20))
+                        embed.add_field(name="CFG", value=str(cfg or 7.0))
                     
                     await interaction.edit_original_response(embed=embed, attachments=[file])
                     
