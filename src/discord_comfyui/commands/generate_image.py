@@ -95,6 +95,17 @@ class GenerateImageCommand(BaseCommand):
                     logger.info(f"Prompt: {prompt}")
                     if negative_prompt:
                         logger.info(f"Negative prompt: {negative_prompt}")
+
+                    # Show additional technical details if debug mode is enabled
+                    if debug:
+                        embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
+                        embed.add_field(name="Positive prompt:", value=prompt)
+                        embed.add_field(name="Negative prompt:", value=negative_prompt)
+                        embed.add_field(name="Workflow", value=workflow_name)
+                        embed.add_field(name="Model", value=generation_request.get_model_name())
+                        embed.add_field(name="Seed", value=seed)
+                        embed.add_field(name="Steps", value=str(steps or 20))
+                        embed.add_field(name="CFG", value=str(cfg or 7.0))
                     
                     # connect to the ComfyUI instance
                     client = ComfyUIClient(self.bot.config.comfyui.host)
@@ -108,6 +119,9 @@ class GenerateImageCommand(BaseCommand):
 
                     # save the prompt ID that ComfyUI returns, necessary for tracking progress.
                     generation_request.set_prompt_id(response["prompt_id"])
+                    if debug:
+                        embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
+
                     logger.info(f"Queued prompt with ID: {generation_request.prompt_id}")
 
                     # Track the execution progress & get the image filename
@@ -130,22 +144,9 @@ class GenerateImageCommand(BaseCommand):
                     file = discord.File(fp=image_io, filename="generated_image.png")
                     
                     embed.color = EMBED_COLOR_COMPLETE
-                    embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}"
+                    if not debug:
+                        embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}"
                     embed.set_image(url="attachment://generated_image.png")
-                    
-                    # Always show the prompt
-                    # embed.add_field(name="Prompt", value=prompt)                    
-                    
-                    # Show additional technical details if debug mode is enabled
-                    if debug:
-                        embed.add_field(name="Prompt ID", value=generation_request.prompt_id)
-                        embed.add_field(name="Workflow", value=workflow_name)
-                        embed.add_field(name="Model", value=generation_request.get_model_name())
-                        embed.add_field(name="Seed", value=seed)
-                        if negative_prompt:
-                            embed.add_field(name="Negative Prompt", value=negative_prompt)
-                        embed.add_field(name="Steps", value=str(steps or 20))
-                        embed.add_field(name="CFG", value=str(cfg or 7.0))
                     
                     await interaction.edit_original_response(embed=embed, attachments=[file])
                     

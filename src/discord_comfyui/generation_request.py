@@ -34,8 +34,8 @@ class GenerationRequest:
         self.model_name = model_name or "flux1-dev-fp8.safetensors"
         #"Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"  # Default model
         self.prompt_id = prompt_id
-        self.steps = steps or 20  # Default to 20 steps
-        self.cfg = cfg or 7  # Default to 7.0 CFG
+        self.steps = steps or 6 
+        self.cfg = cfg or 2.5 
         self.workflow = WorkflowJson(workflow_name)         
     
     def set_prompt_id(self, prompt_id: str) -> None:
