@@ -104,8 +104,8 @@ class GenerateImageCommand(BaseCommand):
                         embed.add_field(name="Workflow", value=workflow_name)
                         embed.add_field(name="Model", value=generation_request.get_model_name())
                         embed.add_field(name="Seed", value=seed)
-                        embed.add_field(name="Steps", value=str(steps or 20))
-                        embed.add_field(name="CFG", value=str(cfg or 7.0))
+                        embed.add_field(name="Steps", value=steps)
+                        embed.add_field(name="CFG", value=cfg)
                     
                     # connect to the ComfyUI instance
                     client = ComfyUIClient(self.bot.config.comfyui.host)
