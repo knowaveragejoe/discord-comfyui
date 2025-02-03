@@ -87,20 +87,32 @@ See `/workflows/default.json` for an example.
 
 ## Usage
 
-### Run prompts:
-`/gen_img <poitive_prompt> <optional: negative_prompt> <optional: workflow_name> <optional: debug> <optional: seed> <optional: model_name>`
+### Generate Images:
+`/gen_image <prompt> [workflow_name] [negative_prompt] [seed] [model_name] [steps] [cfg] [debug]`
 
-`positive_prompt` is the only required parameter. It will run the `/workflows/default.json` workflow using this and place the `positive_prmopt` intput into the matching Positive prompt node
+Parameters:
+- `prompt` (required): The positive prompt for image generation
+- `workflow_name` (optional, default: "default"): Name of the workflow to use from the `/workflows` directory
+- `negative_prompt` (optional): Negative prompt to guide what you don't want in the image
+- `seed` (optional): Seed value for reproducible results. If not provided, a random seed will be generated
+- `model_name` (optional): Name of the model to use for generation
+- `steps` (optional): Number of inference steps
+- `cfg` (optional): Classifier Free Guidance scale value
+- `debug` (optional): When enabled, shows additional technical details in the Discord embed
 
-`negative_prompt` is optional. If provided, it will place the `negative_prompt` input into the matching Negative prompt node.
+Features:
+- Real-time progress tracking with a visual progress bar
+- Concurrent generation prevention (one generation at a time)
+- Error handling with informative messages
+- Debug mode for detailed generation parameters
 
-`workflow_name` is optional. If provided, it will attempt to load the `/workflows/<workflow_name>.json` file and use that instead of the default workflow.
-
-`model_name` is optional. If provided, it will place the `model_name` inpput wherever you want in the workflow JSON.
-
-`seed` is optional. If provided, it will place the `seed` wherever you need in the workflow JSON.
-
-`debug` is optional. If provided, it will print more information in the resulting embed in discord.
+The command will use the specified workflow JSON template (or default.json if not specified) and replace the following placeholders with your inputs:
+- `{{ positive_prompt }}`: Your main prompt
+- `{{ negative_prompt }}`: Your negative prompt
+- `{{ model_name }}`: The model name
+- `{{ seed }}`: The seed value (random if not provided)
+- `{{ steps }}`: Number of inference steps
+- `{{ cfg }}`: CFG scale value
 
 ### Other commands:
 - list models
