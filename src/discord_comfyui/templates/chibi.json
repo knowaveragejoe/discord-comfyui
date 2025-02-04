@@ -1,9 +1,9 @@
 {
   "3": {
     "inputs": {
-      "seed": {{ seed|toint }},
-      "steps": {{ steps|toint }},
-      "cfg": {{ cfg|tofloat }},
+      "seed": {{ seed|tojson }},
+      "steps": {{ steps|tojson }},
+      "cfg": {{ cfg|tojson }},
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
       "denoise": 1,
@@ -31,7 +31,7 @@
   },
   "4": {
     "inputs": {
-      "ckpt_name": "dreamshaper_xl.safetensors"
+      "ckpt_name": {{ model_name|tojson }}
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
@@ -40,8 +40,8 @@
   },
   "5": {
     "inputs": {
-      "width": 768,
-      "height": 1024,
+      "width": 512,
+      "height": 512,
       "batch_size": 1
     },
     "class_type": "EmptyLatentImage",
@@ -51,7 +51,7 @@
   },
   "6": {
     "inputs": {
-      "text": "{{ positive_prompt }}",
+      "text": {{ positive_prompt|tojson }},
       "clip": [
         "43",
         1
@@ -64,7 +64,7 @@
   },
   "7": {
     "inputs": {
-      "text": "{{ negative_prompt }}",
+      "text": {{ negative_prompt|tojson }},
       "clip": [
         "43",
         1
@@ -119,9 +119,9 @@
   },
   "39": {
     "inputs": {
-      "seed": {{ seed|toint }},
-      "steps": {{ steps|toint }},
-      "cfg": {{ cfg|tofloat }},
+      "seed": {{ seed|tojson }},
+      "steps": {{ steps|tojson }},
+      "cfg": {{ cfg|tojson }},
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
       "denoise": 0.5,
