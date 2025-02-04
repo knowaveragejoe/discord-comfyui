@@ -32,7 +32,7 @@ class WorkflowJson:
             Find and load the workflow template, or throw an exception.
         """
         workflow_path = None
-        workflows_dir = Path("workflows")
+        workflows_dir = Path("src/discord_comfyui/templates")
         for file in workflows_dir.glob("*.json"):
             if file.stem == self.workflow_name:
                 workflow_path = file
@@ -41,7 +41,7 @@ class WorkflowJson:
         if not workflow_path:
             raise ValueError(f"Workflow '{self.workflow_name}' not found")
             
-        return WorkflowTemplate(str(workflow_path))
+        return WorkflowTemplate(f"{self.workflow_name}.json")
     
     def get_node_descriptions(self) -> List[str]:
         """Extract descriptions of nodes in the workflow"""
@@ -71,5 +71,6 @@ class WorkflowJson:
         
         with open(save_path, 'w') as f:
             json.dump(rendered_json, f, indent=2)
+            logger.info(f"Rendered workflow JSON saved to {save_path}")
             
         return rendered_json

@@ -4,7 +4,7 @@ Module for handling ComfyUI workflow templates and configuration
 from typing import Dict, Any, Union
 from pathlib import Path
 import json
-from jinja2 import Template, Environment, BaseLoader
+from jinja2 import Template, Environment, PackageLoader, select_autoescape
 
 def to_int(value: Union[str, int, None]) -> int:
     """Convert value to integer, with None handling"""
@@ -25,13 +25,12 @@ class WorkflowTemplate:
         """Initialize with path to workflow template file"""
         self.template_path = template_path
         # Create Jinja environment with custom filters
-        self.env = Environment(loader=BaseLoader())
+        self.env = Environment(
+            loader=PackageLoader("discord_comfyui", "templates"),
+            autoescape=select_autoescape()
+        )
         self.env.filters['toint'] = to_int
         self.env.filters['tofloat'] = to_float
-        
-        # Load template content
-        with open(template_path, 'r') as f:
-            self.template_str = f.read()
             
     def render(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -50,7 +49,7 @@ class WorkflowTemplate:
             Dict containing the rendered workflow data
         """
         # Create template from environment to use custom filters
-        template = self.env.from_string(self.template_str)
+        template = self.env.get_template(self.template_path)
         
         # Render template first, then parse as JSON
         rendered = template.render(**context)
