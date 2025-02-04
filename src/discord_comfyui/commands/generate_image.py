@@ -103,7 +103,7 @@ class GenerateImageCommand(BaseCommand):
                         embed.add_field(name="Negative prompt:", value=negative_prompt)
                         embed.add_field(name="Workflow", value=workflow_name)
                         embed.add_field(name="Model", value=generation_request.get_model_name())
-                        embed.add_field(name="Seed", value=seed)
+                        embed.add_field(name="Seed", value=generation_request.seed)
                         embed.add_field(name="Steps", value=generation_request.steps)
                         embed.add_field(name="CFG", value=generation_request.cfg)
                     
@@ -172,7 +172,10 @@ class GenerateImageCommand(BaseCommand):
         Returns the generated image filename from the websocket connection.
         """
         async def progress_callback(data):
+            logger.info(f"Progress callback data: {data}")
+
             if data["type"] == "progress":
+                # Handle progress bar updates
                 progress = data["data"]
                 value = progress["value"]
                 max_value = progress["max"]
@@ -186,6 +189,15 @@ class GenerateImageCommand(BaseCommand):
                     f"Progress: {progress_text}"
                 )
                 await interaction.edit_original_response(embed=embed)
+            elif data["type"] == "preview_image":
+                # Handle image previews
+                image_data = data['data']['image_data']
+                image_format = data['data']['format']
+                image = io.BytesIO(image_data)
+                embed.set_image(url=f"attachment://preview.{image_format.lower()}")
+                # Create a discord File object from the BytesIO
+                file = discord.File(fp=image, filename=f"preview.{image_format.lower()}")
+                await interaction.edit_original_response(embed=embed, attachments=[file])
 
         # Track the execution progress
         logger.info(f"Tracking progress for prompt {generation_request.prompt_id}....")

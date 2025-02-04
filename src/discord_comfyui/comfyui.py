@@ -1,13 +1,18 @@
 import asyncio
 import json
 import logging
+import struct
 import uuid
 from typing import Optional, Dict, Any, Callable
+import aiohttp
 import httpx
 import websockets
 from websockets.client import WebSocketClientProtocol
 
 logger = logging.getLogger(__name__)
+
+class BinaryEventTypes:
+    PREVIEW_IMAGE = 1
 
 model_types = [
     "checkpoints",
@@ -221,6 +226,32 @@ class ComfyUIClient:
                         if data["data"]["node"] is None and data["data"]["prompt_id"] == prompt_id:
                             logger.info("Execution completed")
                             break
+                else:
+                    if isinstance(message, bytes):
+                        # First 4 bytes are the event type
+                        event_type = struct.unpack(">I", message[:4])[0]
+                        
+                        if event_type == BinaryEventTypes.PREVIEW_IMAGE:
+                            # Next 4 bytes are the image format
+                            image_format = struct.unpack(">I", message[4:8])[0]
+                            # Remaining data is the image bytes
+                            image_data = message[8:]
+                            
+                            format_name = "JPEG" if image_format == 1 else "PNG"
+                            logger.info(f"Received preview image in {format_name} format")
+                            # TODO: Handle the preview image data as needed
+
+                            if callback:
+                                await callback({
+                                    "type": "preview_image",
+                                    "data": {
+                                        "format": format_name,
+                                        "image_data": image_data
+                                    }
+                                })
+                    
+                    else:
+                        logger.warning(f"Unexpected message type: {type(message)}")
         except Exception as e:
             logger.error(f"Error while tracking progress: {e}")
             raise
