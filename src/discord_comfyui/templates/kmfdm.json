@@ -1,7 +1,7 @@
 {
   "3": {
     "inputs": {
-      "seed": "{{ seed }}",
+      "seed": {{ seed|tojson }},
       "steps": 30,
       "cfg": 7,
       "sampler_name": "euler_ancestral",
@@ -51,7 +51,7 @@
   },
   "6": {
     "inputs": {
-      "text": "{{ positive_prompt }}",
+      "text": {{ positive_prompt|tojson }},
       "clip": [
         "43",
         1
@@ -64,7 +64,7 @@
   },
   "7": {
     "inputs": {
-      "text": "{{ negative_prompt }}",
+      "text": {{ negative_prompt|tojson }},
       "clip": [
         "43",
         1

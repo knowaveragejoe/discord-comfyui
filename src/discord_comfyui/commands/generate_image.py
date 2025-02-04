@@ -77,7 +77,7 @@ class GenerateImageCommand(BaseCommand):
                 try:
                     # If the seed is not provided, set it to a random value
                     if not seed:
-                        seed = str(random.randint(0, 1000000))
+                        seed = str(random.randint(0, 100000000))
 
                     # Create and process the generation request
                     generation_request = GenerationRequest(

@@ -31,14 +31,7 @@ class WorkflowJson:
         """
             Find and load the workflow template, or throw an exception.
         """
-        workflow_path = None
-        workflows_dir = Path("src/discord_comfyui/templates")
-        for file in workflows_dir.glob("*.json"):
-            if file.stem == self.workflow_name:
-                workflow_path = file
-                break
-        
-        if not workflow_path:
+        if not Path(f"src/discord_comfyui/templates/{self.workflow_name}.json").exists():
             raise ValueError(f"Workflow '{self.workflow_name}' not found")
             
         return WorkflowTemplate(f"{self.workflow_name}.json")
