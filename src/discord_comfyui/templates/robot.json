@@ -51,7 +51,7 @@
   },
   "6": {
     "inputs": {
-      "text": {{ positive_prompt }},
+      "text": {{ ("in the style of ck-ncr, " ~ positive_prompt)|tojson }},
       "clip": [
         "10",
         1

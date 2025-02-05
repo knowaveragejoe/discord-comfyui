@@ -53,4 +53,9 @@ class WorkflowTemplate:
         
         # Render template first, then parse as JSON
         rendered = template.render(**context)
+
+        # Save rendered json to file for debugging
+        # with open("saved/rendered.json", "w") as f:
+        #     f.write(rendered)
+
         return json.loads(rendered)
