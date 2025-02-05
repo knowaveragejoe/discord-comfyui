@@ -268,6 +268,17 @@ class ComfyUIClient:
 
         return image_filename
 
+    async def interrupt(self) -> str:
+        """
+        Interrupt any ongoing prompt processing.
+        
+        Returns:
+            Dict containing the response from the interrupt request
+        """
+        response = await self.http_client.post(f"{self.base_url}/interrupt")
+        response.raise_for_status()
+        return response.content
+
     async def close(self) -> None:
         """Close the WebSocket and HTTP connections."""
         if self.websocket:
