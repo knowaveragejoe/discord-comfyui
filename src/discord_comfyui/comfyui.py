@@ -192,12 +192,15 @@ class ComfyUIClient:
         Args:
             prompt_id: The ID of the prompt to track
             callback: Optional callback function to handle progress updates
+            
+        The callback will be called approximately every 3rd update to avoid excessive updates.
+        Critical events like execution completion will always trigger the callback.
         """
         if not self.websocket:
             raise RuntimeError("Not connected to ComfyUI. Call connect() first.")
 
-
         image_filename = ""
+        update_counter = 0
         try:
             while True:
                 message = await self.websocket.recv()
@@ -205,13 +208,12 @@ class ComfyUIClient:
                     data = json.loads(message)
                     # logger.info(f"Received message: {data}")
                     
-                    # Call the callback if provided
-                    if callback:
-                        await callback(data)
-                    
-                    # Log progress information
+                    # Handle different message types
                     if data["type"] == "progress":
-                        pass
+                        # Only call callback every 3rd progress update
+                        if callback and update_counter % 3 == 0:
+                            await callback(data)
+                        update_counter += 1
                         # progress_data = data["data"]
                         # logger.info(f"Progress: {progress_data['value']}/{progress_data['max']}")
                     
@@ -219,12 +221,18 @@ class ComfyUIClient:
                     # store the output filename for later retrieval.
                     elif data["type"] == "executed":
                         image_filename = self.extract_filename(data)
+                        # Always call callback for execution completion
+                        if callback:
+                            await callback(data)
                             
                     
                     # execution is "actually" finished here, so this is where we break
                     elif data["type"] == "executing":
                         if data["data"]["node"] is None and data["data"]["prompt_id"] == prompt_id:
                             logger.info("Execution completed")
+                            # Always call callback for final execution state
+                            if callback:
+                                await callback(data)
                             break
                 else:
                     if isinstance(message, bytes):
@@ -238,10 +246,11 @@ class ComfyUIClient:
                             image_data = message[8:]
                             
                             format_name = "JPEG" if image_format == 1 else "PNG"
-                            logger.info(f"Received preview image in {format_name} format")
+                            # logger.info(f"Received preview image in {format_name} format")
                             # TODO: Handle the preview image data as needed
 
-                            if callback:
+                            # Only call callback every 3rd preview image
+                            if callback and update_counter % 3 == 0:
                                 await callback({
                                     "type": "preview_image",
                                     "data": {
@@ -249,6 +258,7 @@ class ComfyUIClient:
                                         "image_data": image_data
                                     }
                                 })
+                            update_counter += 1
                     
                     else:
                         logger.warning(f"Unexpected message type: {type(message)}")

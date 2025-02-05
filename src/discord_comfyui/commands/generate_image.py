@@ -172,7 +172,7 @@ class GenerateImageCommand(BaseCommand):
         Returns the generated image filename from the websocket connection.
         """
         async def progress_callback(data):
-            logger.info(f"Progress callback data: {data}")
+            # logger.info(f"Progress callback data: {data}")
 
             if data["type"] == "progress":
                 # Handle progress bar updates
