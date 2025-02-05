@@ -32,7 +32,7 @@ class ListWorkflowsCommand(BaseCommand):
             # Get the lock for this user
             async with self.bot.get_user_lock(interaction.user.id):
                 # Get list of workflow files
-                workflows_dir = Path("workflows")
+                workflows_dir = Path("src/discord_comfyui/templates")
                 workflows = [f.name for f in workflows_dir.glob("*.json")]
                 workflow_list = "\n".join(workflows) if workflows else "No workflow files found"
                 
