@@ -1,6 +1,7 @@
 import logging
 import io
 import random
+import time
 import discord
 from discord import app_commands
 from rich import print
@@ -23,10 +24,10 @@ class GenerateImageCommand(BaseCommand):
     def __init__(self, bot):
         super().__init__(bot)
         self._running = False
-    
+
     def register(self, tree: app_commands.CommandTree, guild: discord.Object):
         """Register the command with the bot's command tree"""
-        
+
         @tree.command(
             name="gen_image",
             description="Generate an image using a specific workflow",
@@ -48,12 +49,12 @@ class GenerateImageCommand(BaseCommand):
             if not passed:
                 await interaction.response.send_message(error_message, ephemeral=True)
                 return
-            
+
             # User must at least provide a prompt.
             if not prompt:
                 await interaction.response.send_message("Prompt is required", ephemeral=True)
                 return
-                           
+
             # Get the lock for this user
             async with self.bot.get_user_lock(interaction.user.id):
                 # set comfyUI client to None for now, so we can properly clean it up with the finally: block
@@ -73,7 +74,7 @@ class GenerateImageCommand(BaseCommand):
                     color=EMBED_COLOR_PROCESSING
                 )
                 await interaction.response.send_message(embed=embed)
-                
+
                 try:
                     # If the seed is not provided, set it to a random value
                     if not seed:
@@ -89,7 +90,7 @@ class GenerateImageCommand(BaseCommand):
                         steps=steps,
                         cfg=cfg
                     )
-                    
+
                     logger.info(f"Image generation requested by {interaction.user} (ID: {interaction.user.id})")
                     logger.info(f"Workflow: {workflow_name}")
                     logger.info(f"Prompt: {prompt}")
@@ -106,7 +107,10 @@ class GenerateImageCommand(BaseCommand):
                         embed.add_field(name="Seed", value=generation_request.seed)
                         embed.add_field(name="Steps", value=generation_request.steps)
                         embed.add_field(name="CFG", value=generation_request.cfg)
-                    
+
+                    # Record start time
+                    start_time = time.time()
+
                     # connect to the ComfyUI instance
                     client = ComfyUIClient(self.bot.config.comfyui.host)
                     await client.connect()
@@ -126,9 +130,9 @@ class GenerateImageCommand(BaseCommand):
 
                     # Track the execution progress & get the image filename
                     image_filename = await self.track_progress(
-                        client=client, 
+                        client=client,
                         generation_request=generation_request,
-                        interaction=interaction, 
+                        interaction=interaction,
                         embed=embed
                     )
 
@@ -137,19 +141,25 @@ class GenerateImageCommand(BaseCommand):
                     # Retrieve the generated image
                     image_data = await client.get_image(filename=image_filename, folder_type="output")
                     logger.info(f"Image data retrieved: {len(image_data)} bytes")
-                    
+
                     # Create a BytesIO object from the image data
                     image_io = io.BytesIO(image_data)
+                    # Record end time and calculate duration
+                    end_time = time.time()
+                    duration = end_time - start_time
+
                     # Create a discord File object from the BytesIO
                     file = discord.File(fp=image_io, filename="generated_image.png")
-                    
+
                     embed.color = EMBED_COLOR_COMPLETE
+                    if debug:
+                        embed.add_field(name="Generation Time", value=f"{duration:.2f} seconds")
                     if not debug:
                         embed.description = f"Generated image using workflow '{workflow_name}' with prompt: {prompt}"
                     embed.set_image(url="attachment://generated_image.png")
-                    
+
                     await interaction.edit_original_response(embed=embed, attachments=[file])
-                    
+
                 except Exception as e:
                     logger.error("Image generation failed", exc_info=e)
                     embed.color = EMBED_COLOR_ERROR
@@ -157,7 +167,7 @@ class GenerateImageCommand(BaseCommand):
                     await interaction.edit_original_response(embed=embed)
                 finally:
                     if client:
-                        await client.close()                
+                        await client.close()
                     self._running = False
 
     async def track_progress(
@@ -168,7 +178,7 @@ class GenerateImageCommand(BaseCommand):
         embed: discord.Embed
     ):
         """
-        Callback handler to update embed with a progress bar. 
+        Callback handler to update embed with a progress bar.
         Returns the generated image filename from the websocket connection.
         """
         async def progress_callback(data):
@@ -182,7 +192,7 @@ class GenerateImageCommand(BaseCommand):
                 percentage = int((value / max_value) * 20)  # 20 segments for progress bar
                 progress_bar = "█" * percentage + "░" * (20 - percentage)
                 progress_text = f"[{progress_bar}] {value}/{max_value}"
-                
+
                 embed.description = (
                     f"Using workflow: {generation_request.workflow.workflow_name}\n"
                     f"Processing prompt: {generation_request.prompt}\n"
